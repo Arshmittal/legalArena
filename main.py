@@ -209,6 +209,8 @@ def evaluate():
         
         for _, row in df.iterrows():
             question = row["Legal Questions"]
+            print(question)
+
             user_answer = row["Answer"]
             ground_truth = ground_truth_data.get(question, None)
             
@@ -236,15 +238,14 @@ def evaluate():
                 "evaluation_scores": evaluation_scores
             })
             
-            try:
-                if "evaluation_results" in evaluation_scores:
-                    metrics = json.loads(evaluation_scores["evaluation_results"])
-                    for key in aggregated_scores:
-                        if key in metrics:
-                            aggregated_scores[key] += metrics[key]
-                    total_questions += 1
-            except Exception as e:
-                logging.error(f"Error parsing evaluation results: {e}")
+            
+            if "evaluation_results" in evaluation_scores:
+                metrics = json.loads(evaluation_scores["evaluation_results"])
+                for key in aggregated_scores:
+                    if key in metrics:
+                        aggregated_scores[key] += metrics[key]
+                total_questions += 1
+            
         
         if total_questions > 0:
             for key in aggregated_scores:
