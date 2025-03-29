@@ -30,7 +30,7 @@ dummy_user = {
 app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)  # Increased session lifetime
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_SECURE'] = True  # Set to True in production with HTTPS
 
 app.logger.setLevel(logging.INFO)
 
@@ -38,9 +38,7 @@ app.logger.setLevel(logging.INFO)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 
-# Configure Flask-Session
-app.config['SESSION_TYPE'] = 'filesystem'
-Session(app)
+
 
 # Configure Logging
 logging.basicConfig(level=logging.DEBUG)
