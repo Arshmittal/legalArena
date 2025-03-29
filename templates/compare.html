@@ -327,75 +327,75 @@
 
         // Compare Selected Tools
         function compareTwoTools() {
-            const tool1Id = parseInt(tool1Select.value);
-            const tool2Id = parseInt(tool2Select.value);
+    const tool1Id = parseInt(tool1Select.value);
+    const tool2Id = parseInt(tool2Select.value);
 
-            if (!tool1Id || !tool2Id) {
-                alert('Please select two tools to compare');
-                return;
+    if (!tool1Id || !tool2Id) {
+        alert('Please select two tools to compare');
+        return;
+    }
+
+    if (tool1Id === tool2Id) {
+        alert('Please select different tools');
+        return;
+    }
+
+    const tool1 = legalAITools.find(tool => tool.id === tool1Id);
+    const tool2 = legalAITools.find(tool => tool.id === tool2Id);
+
+    comparisonArea.innerHTML = `
+        <div class="tool-card">
+            <h2>${tool1.name}</h2>
+            <div class="tool-query">
+                <strong>Query:</strong> ${tool1.query}
+            </div>
+            <div class="tool-response">
+                <ol>
+                    ${tool1.response.map(item => `<li>${item}</li>`).join('')}
+                </ol>
+            </div>
+            <div class="voting-section">
+                <span class="vote-count" id="tool${tool1.id}-votes">0 Votes</span>
+                <button class="vote-btn" data-tool-id="${tool1.id}">
+                    <i class="fas fa-thumbs-up me-2"></i>Vote
+                </button>
+            </div>
+        </div>
+        <div class="tool-card">
+            <h2>${tool2.name}</h2>
+            <div class="tool-query">
+                <strong>Query:</strong> ${tool2.query}
+            </div>
+            <div class="tool-response">
+                <ol>
+                    ${tool2.response.map(item => `<li>${item}</li>`).join('')}
+                </ol>
+            </div>
+            <div class="voting-section">
+                <span class="vote-count" id="tool${tool2.id}-votes">0 Votes</span>
+                <button class="vote-btn" data-tool-id="${tool2.id}">
+                    <i class="fas fa-thumbs-up me-2"></i>Vote
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Attach voting functionality dynamically after rendering
+    const voteButtons = document.querySelectorAll('.vote-btn');
+    voteButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const toolId = button.getAttribute('data-tool-id');
+            const voteCountElement = document.getElementById(`tool${toolId}-votes`); // Match the correct tool ID dynamically
+
+            if (voteCountElement) {
+                let currentVotes = parseInt(voteCountElement.textContent);
+                voteCountElement.textContent = `${currentVotes + 1} Votes`;
             }
-
-            if (tool1Id === tool2Id) {
-                alert('Please select different tools');
-                return;
-            }
-
-            const tool1 = legalAITools.find(tool => tool.id === tool1Id);
-            const tool2 = legalAITools.find(tool => tool.id === tool2Id);
-
-            comparisonArea.innerHTML = `
-                <div class="tool-card">
-                    <h2>${tool1.name}</h2>
-                    <div class="tool-query">
-                        <strong>Query:</strong> ${tool1.query}
-                    </div>
-                    <div class="tool-response">
-                        <ol>
-                            ${tool1.response.map(item => `<li>${item}</li>`).join('')}
-                        </ol>
-                    </div>
-                    <div class="voting-section">
-                        <span class="vote-count" id="tool1-votes">0 Votes</span>
-                        <button class="vote-btn" data-tool-id="${tool1.id}">
-                            <i class="fas fa-thumbs-up me-2"></i>Vote
-                        </button>
-                    </div>
-                </div>
-                <div class="tool-card">
-                    <h2>${tool2.name}</h2>
-                    <div class="tool-query">
-                        <strong>Query:</strong> ${tool2.query}
-                    </div>
-                    <div class="tool-response">
-                        <ol>
-                            ${tool2.response.map(item => `<li>${item}</li>`).join('')}
-                        </ol>
-                    </div>
-                    <div class="voting-section">
-                        <span class="vote-count" id="tool2-votes">0 Votes</span>
-                        <button class="vote-btn" data-tool-id="${tool2.id}">
-                            <i class="fas fa-thumbs-up me-2"></i>Vote
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            // Add voting functionality
-            const voteButtons = document.querySelectorAll('.vote-btn');
-
-voteButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const toolId = button.getAttribute('data-tool-id');  
-        const voteCountElement = document.getElementById(`tool${toolId}-votes`); // Dynamically select the correct vote element
-        
-        if (voteCountElement) {
-            let currentVotes = parseInt(voteCountElement.textContent);
-            voteCountElement.textContent = `${currentVotes + 1} Votes`;
-        }
+        });
     });
-});
+}
 
-        }
+        
 
         // Reset Comparison
         function resetComparison() {
