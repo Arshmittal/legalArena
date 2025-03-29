@@ -1,21 +1,42 @@
 import os
 import logging
 import pandas as pd
-from flask import Flask, json, jsonify, redirect, url_for, session, request, render_template
+from flask import Flask, json, jsonify, redirect, url_for, session, request, render_template, url_for
 from flask_session import Session
 from authlib.integrations.flask_client import OAuth
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from werkzeug.utils import secure_filename
-
+from werkzeug.middleware.proxy_fix import ProxyFix
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
 
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+dummy_user = {
+    "name": "Tester",
+    "email": "tester@example.com",
+    "picture": "/static/default-profile.png",
+    "last_login": datetime.utcnow()
+}
+
+
+
+app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)  # Increased session lifetime
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+
+app.logger.setLevel(logging.INFO)
+
+# Add this line to handle proxy headers correctly
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 
 # Configure Flask-Session
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -187,6 +208,7 @@ def google_callback():
         session.clear()
         return render_template('error.html', error="Authentication failed. Please try again.")
 
+    
     
 
 
