@@ -4,41 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legal AI Tools Comparison</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* Color Palette */
+        :root {
+            --primary-color: #2C3E50;       /* Deep blue-gray for main elements */
+            --secondary-color: #34495E;     /* Slightly lighter blue-gray */
+            --accent-color: #3498DB;        /* Bright, professional blue */
+            --background-color: #F4F6F7;    /* Light, soft gray background */
+            --text-color: #2C3E50;          /* Dark text color */
+            --light-text: #FFFFFF;          /* White text for contrast */
+            --gray-text: #7F8C8D;           /* Soft gray for secondary text */
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --background-color: #f4f4f4;
-            --text-color: #333;
-            --border-color: #e0e0e0;
-        }
-
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--background-color);
             line-height: 1.6;
-            padding: 20px;
+            min-height: 100vh;
+            color: var(--text-color);
+            padding: 0;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .navbar {
+            background-color: var(--primary-color);
         }
+        .container{
+            margin-top: 20px;
+        }
+        .user-image {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+     
 
         .title {
             text-align: center;
-            color: var(--primary-color);
+            color: var(--accent-color);
             margin-bottom: 30px;
+            font-weight: 700;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(52, 152, 219, 0.2);
         }
 
         .tool-selection {
@@ -61,10 +79,11 @@
 
         .tool-card {
             flex: 1;
-            border: 1px solid var(--border-color);
+            border: none;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background-color: white;
         }
 
         .tool-query {
@@ -87,12 +106,21 @@
         }
 
         .vote-btn {
-            background-color: var(--primary-color);
+            background-color: var(--accent-color);
             color: white;
             border: none;
             padding: 10px 15px;
-            border-radius: 4px;
+            border-radius: 30px;
             cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+        }
+        
+        .vote-btn:hover {
+            background-color: #2980b9;
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+            transform: translateY(-2px);
         }
 
         .vote-count {
@@ -109,46 +137,67 @@
         .overall-btn {
             padding: 12px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 30px;
             color: white;
             cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
-        .overall-btn.compare { background-color: var(--secondary-color); }
-        .overall-btn.reset { background-color: #e74c3c; }
+        .overall-btn.compare { 
+            background-color: var(--accent-color);
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+        }
+        
+        .overall-btn.compare:hover {
+            background-color: #2980b9;
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .overall-btn.reset { 
+            background-color: #e74c3c;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
+        }
+        
+        .overall-btn.reset:hover {
+            background-color: #c0392b;
+            box-shadow: 0 6px 15px rgba(231, 76, 60, 0.3);
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <!-- Left: Logo -->
-        <div class="logo">
-            Legal<span class="highlight">Arena</span>
-        </div>
-        
-        <!-- Right: Auth Section -->
-        <div class="auth-container">
-            <!-- Test Tool Button (always visible, but disabled when not logged in) -->
-            <a href="/tools" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
-                Test the Tool
-            </a>
-            
-            {% if user %}
-                <!-- User Profile (when logged in) -->
-                <div class="profile-container" onclick="toggleDropdown()">
-                    <img src="{{ user.picture }}" alt="Profile Picture" class="profile-pic">
-                    <span class="profile-name">{{ user.name }}</span>
-                    <!-- Dropdown Menu -->
-                    <div class="dropdown-menu" id="dropdown">
-                        <a href="{{ url_for('logout') }}">Logout</a>
-                    </div>
-                </div>
-            {% else %}
-                <!-- Google Sign-in Button (when not logged in) -->
-                <a href="/login" class="google-btn">
-                    <img src="{{ url_for('static', filename='google-icon.png') }}" alt="Google Logo">
-                    Sign in with Google
-                </a>
-            {% endif %}
+    <!-- Navigation Bar (Copied from tools.html) -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Legal Arena</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if user %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.picture %}
+                            <img src="{{ user.picture }}" alt="{{ user.name }}" class="user-image">
+                            {% endif %}
+                            {{ user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/">Home</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </nav>
 
@@ -169,10 +218,18 @@
         </div>
 
         <div class="overall-actions">
-            <button id="compare-btn" class="overall-btn compare">Compare Tools</button>
-            <button id="reset-btn" class="overall-btn reset">Reset Selection</button>
+            <button id="compare-btn" class="overall-btn compare">
+                <i class="fas fa-chart-bar me-2"></i>Compare Tools
+            </button>
+            <button id="reset-btn" class="overall-btn reset">
+                <i class="fas fa-redo me-2"></i>Reset Selection
+            </button>
         </div>
     </div>
+
+    <!-- Bootstrap & jQuery JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
         // Sample Legal AI Tools Data
@@ -299,7 +356,9 @@
                     </div>
                     <div class="voting-section">
                         <span class="vote-count" id="tool1-votes">0 Votes</span>
-                        <button class="vote-btn" data-tool-id="${tool1.id}">Vote</button>
+                        <button class="vote-btn" data-tool-id="${tool1.id}">
+                            <i class="fas fa-thumbs-up me-2"></i>Vote
+                        </button>
                     </div>
                 </div>
                 <div class="tool-card">
@@ -314,21 +373,28 @@
                     </div>
                     <div class="voting-section">
                         <span class="vote-count" id="tool2-votes">0 Votes</span>
-                        <button class="vote-btn" data-tool-id="${tool2.id}">Vote</button>
+                        <button class="vote-btn" data-tool-id="${tool2.id}">
+                            <i class="fas fa-thumbs-up me-2"></i>Vote
+                        </button>
                     </div>
                 </div>
             `;
 
             // Add voting functionality
             const voteButtons = document.querySelectorAll('.vote-btn');
-            voteButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const toolId = button.getAttribute('data-tool-id');
-                    const voteCountElement = document.getElementById(`tool${toolId}-votes`);
-                    let currentVotes = parseInt(voteCountElement.textContent);
-                    voteCountElement.textContent = `${currentVotes + 1} Votes`;
-                });
-            });
+
+voteButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const toolId = button.getAttribute('data-tool-id');  
+        const voteCountElement = document.getElementById(`tool${toolId}-votes`); // Dynamically select the correct vote element
+        
+        if (voteCountElement) {
+            let currentVotes = parseInt(voteCountElement.textContent);
+            voteCountElement.textContent = `${currentVotes + 1} Votes`;
+        }
+    });
+});
+
         }
 
         // Reset Comparison

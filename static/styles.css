@@ -167,7 +167,10 @@ h3 {
     cursor: pointer;
     transition: all 0.3s ease;
 }
-
+.google-btn img{
+    width: 4vh;
+    margin-right: 5px;
+}
 .google-btn:hover {
     background-color: var(--secondary-color);
 }
