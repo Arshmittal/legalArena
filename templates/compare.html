@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal AI Tools Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f4f4f4;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        .tool-selection {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .tool-select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .comparison-area {
+            display: flex;
+            gap: 30px;
+        }
+
+        .tool-card {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tool-query {
+            margin-bottom: 20px;
+        }
+
+        .tool-response ol {
+            padding-left: 20px;
+        }
+
+        .tool-response li {
+            margin-bottom: 10px;
+        }
+
+        .voting-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .vote-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .vote-count {
+            font-weight: bold;
+        }
+
+        .overall-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .overall-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .overall-btn.compare { background-color: var(--secondary-color); }
+        .overall-btn.reset { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <!-- Left: Logo -->
+        <div class="logo">
+            Legal<span class="highlight">Arena</span>
+        </div>
+        
+        <!-- Right: Auth Section -->
+        <div class="auth-container">
+            <!-- Test Tool Button (always visible, but disabled when not logged in) -->
+            <a href="/tools" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
+                Test the Tool
+            </a>
+            
+            {% if user %}
+                <!-- User Profile (when logged in) -->
+                <div class="profile-container" onclick="toggleDropdown()">
+                    <img src="{{ user.picture }}" alt="Profile Picture" class="profile-pic">
+                    <span class="profile-name">{{ user.name }}</span>
+                    <!-- Dropdown Menu -->
+                    <div class="dropdown-menu" id="dropdown">
+                        <a href="{{ url_for('logout') }}">Logout</a>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Google Sign-in Button (when not logged in) -->
+                <a href="/login" class="google-btn">
+                    <img src="{{ url_for('static', filename='google-icon.png') }}" alt="Google Logo">
+                    Sign in with Google
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="title">Legal AI Tools Comparison</h1>
+        
+        <div class="tool-selection">
+            <select id="tool1-select" class="tool-select">
+                <option value="">Select First Tool</option>
+            </select>
+            <select id="tool2-select" class="tool-select">
+                <option value="">Select Second Tool</option>
+            </select>
+        </div>
+
+        <div id="comparison-area" class="comparison-area">
+            <!-- Comparison tools will be dynamically populated here -->
+        </div>
+
+        <div class="overall-actions">
+            <button id="compare-btn" class="overall-btn compare">Compare Tools</button>
+            <button id="reset-btn" class="overall-btn reset">Reset Selection</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample Legal AI Tools Data
+        const legalAITools = [
+            {
+                id: 1,
+                name: "ContractMaster AI",
+                query: "What are the requirements for establishing a valid contract under common law?",
+                response: [
+                    "Offer: A clear and definite proposal to enter into an agreement.",
+                    "Acceptance: An unequivocal agreement to the exact terms of the offer.",
+                    "Consideration: Something of value exchanged between the parties.",
+                    "Mutual assent: Both parties must understand and agree to the same terms.",
+                    "Legal capacity: Parties must have the legal ability to enter into a contract.",
+                    "Legal purpose: The contract's objective must be legal and not against public policy."
+                ]
+            },
+            {
+                id: 2,
+                name: "LegalEase Pro",
+                query: "What are the requirements for establishing a valid contract under common law?",
+                response: [
+                    "Offer: One party must make a definite and certain proposal.",
+                    "Acceptance: The offeree must clearly communicate agreement to the terms.",
+                    "Consideration: Each party must provide something of legal value.",
+                    "Intention to create legal relations: Parties must intend legal consequences.",
+                    "Capacity: Parties must have legal capacity to contract.",
+                    "Legality of purpose: The contract's subject matter must be legal."
+                ]
+            },
+            {
+                id: 3,
+                name: "LawGenius AI",
+                query: "What are the requirements for establishing a valid contract under common law?",
+                response: [
+                    "Formal Offer: A comprehensive and clear proposal of contractual terms.",
+                    "Explicit Acceptance: Precise and unambiguous agreement to all offer terms.",
+                    "Valuable Consideration: Mutual exchange of legal value or promises.",
+                    "Mutual Understanding: Clear comprehension and agreement by all parties.",
+                    "Legal Competence: Contracting parties must have full legal capacity.",
+                    "Legitimate Purpose: Contract must serve a legal and ethical objective."
+                ]
+            },
+            {
+                id: 4,
+                name: "SmartContract Assistant",
+                query: "What are the requirements for establishing a valid contract under common law?",
+                response: [
+                    "Clear Offer: Detailed and specific proposal of contractual terms.",
+                    "Definitive Acceptance: Unequivocal agreement matching the offer exactly.",
+                    "Mutual Consideration: Balanced exchange of values or promises.",
+                    "Shared Intent: Mutual understanding of contract's terms and consequences.",
+                    "Legal Competency: All parties must have legal authorization to contract.",
+                    "Lawful Objective: Contract's purpose must comply with legal standards."
+                ]
+            },
+            {
+                id: 5,
+                name: "JurisTech AI",
+                query: "What are the requirements for establishing a valid contract under common law?",
+                response: [
+                    "Precise Offer: Comprehensive and unambiguous contractual proposal.",
+                    "Complete Acceptance: Full agreement with all proposed terms.",
+                    "Substantive Consideration: Meaningful exchange of legal values.",
+                    "Consensual Understanding: Synchronized comprehension of contract terms.",
+                    "Legal Capacity: Parties must possess full contractual competence.",
+                    "Ethical Purpose: Contract must adhere to legal and moral standards."
+                ]
+            }
+        ];
+
+        // DOM Elements
+        const tool1Select = document.getElementById('tool1-select');
+        const tool2Select = document.getElementById('tool2-select');
+        const comparisonArea = document.getElementById('comparison-area');
+        const compareBtn = document.getElementById('compare-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Populate Tool Selects
+        function populateToolSelects() {
+            legalAITools.forEach(tool => {
+                const option1 = document.createElement('option');
+                const option2 = document.createElement('option');
+                
+                option1.value = tool.id;
+                option1.textContent = tool.name;
+                
+                option2.value = tool.id;
+                option2.textContent = tool.name;
+                
+                tool1Select.appendChild(option1);
+                tool2Select.appendChild(option2);
+            });
+        }
+
+        // Compare Selected Tools
+        function compareTwoTools() {
+            const tool1Id = parseInt(tool1Select.value);
+            const tool2Id = parseInt(tool2Select.value);
+
+            if (!tool1Id || !tool2Id) {
+                alert('Please select two tools to compare');
+                return;
+            }
+
+            if (tool1Id === tool2Id) {
+                alert('Please select different tools');
+                return;
+            }
+
+            const tool1 = legalAITools.find(tool => tool.id === tool1Id);
+            const tool2 = legalAITools.find(tool => tool.id === tool2Id);
+
+            comparisonArea.innerHTML = `
+                <div class="tool-card">
+                    <h2>${tool1.name}</h2>
+                    <div class="tool-query">
+                        <strong>Query:</strong> ${tool1.query}
+                    </div>
+                    <div class="tool-response">
+                        <ol>
+                            ${tool1.response.map(item => `<li>${item}</li>`).join('')}
+                        </ol>
+                    </div>
+                    <div class="voting-section">
+                        <span class="vote-count" id="tool1-votes">0 Votes</span>
+                        <button class="vote-btn" data-tool-id="${tool1.id}">Vote</button>
+                    </div>
+                </div>
+                <div class="tool-card">
+                    <h2>${tool2.name}</h2>
+                    <div class="tool-query">
+                        <strong>Query:</strong> ${tool2.query}
+                    </div>
+                    <div class="tool-response">
+                        <ol>
+                            ${tool2.response.map(item => `<li>${item}</li>`).join('')}
+                        </ol>
+                    </div>
+                    <div class="voting-section">
+                        <span class="vote-count" id="tool2-votes">0 Votes</span>
+                        <button class="vote-btn" data-tool-id="${tool2.id}">Vote</button>
+                    </div>
+                </div>
+            `;
+
+            // Add voting functionality
+            const voteButtons = document.querySelectorAll('.vote-btn');
+            voteButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const toolId = button.getAttribute('data-tool-id');
+                    const voteCountElement = document.getElementById(`tool${toolId}-votes`);
+                    let currentVotes = parseInt(voteCountElement.textContent);
+                    voteCountElement.textContent = `${currentVotes + 1} Votes`;
+                });
+            });
+        }
+
+        // Reset Comparison
+        function resetComparison() {
+            tool1Select.selectedIndex = 0;
+            tool2Select.selectedIndex = 0;
+            comparisonArea.innerHTML = '';
+        }
+
+        // Event Listeners
+        compareBtn.addEventListener('click', compareTwoTools);
+        resetBtn.addEventListener('click', resetComparison);
+
+        // Initialize
+        populateToolSelects();
+    </script>
+</body>
+</html>

@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal AI Assessment Tools</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Color Palette */
+        :root {
+            --primary-color: #2C3E50;       /* Deep blue-gray for main elements */
+            --secondary-color: #34495E;     /* Slightly lighter blue-gray */
+            --accent-color: #3498DB;        /* Bright, professional blue */
+            --background-color: #F4F6F7;    /* Light, soft gray background */
+            --text-color: #2C3E50;          /* Dark text color */
+            --light-text: #FFFFFF;          /* White text for contrast */
+            --gray-text: #7F8C8D;           /* Soft gray for secondary text */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+        }
+        
+        .tools-container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: white;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            color: var(--accent-color);
+            font-weight: 700;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(52, 152, 219, 0.2);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            padding: 12px;
+            border-radius: 50%;
+            margin-right: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .tool-card {
+            border: none;
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            background-color: rgba(52, 152, 219, 0.1);
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--accent-color);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin: 30px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            transform: scale(1.01);
+        }
+        
+        .upload-icon {
+            font-size: 3.5rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            border-radius: 30px;
+            padding: 12px 30px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-primary {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            border-radius: 30px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--accent-color);
+            color: var(--light-text);
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--gray-text);
+            border-color: #dadce0;
+            border-radius: 30px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #f1f3f4;
+            color: var(--text-color);
+            border-color: #dadce0;
+        }
+        
+        .results-container {
+            margin-top: 40px;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .score-card {
+            background-color: rgba(52, 152, 219, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .score-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+        
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 18px;
+        }
+        
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .score-label {
+            font-weight: 500;
+            color: var(--gray-text);
+        }
+        
+        .score-value {
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        
+        .score-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 20px;
+            margin-top: 5px;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .score-fill {
+            height: 100%;
+            border-radius: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 1s ease-out;
+        }
+        
+        .user-image {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .instructions {
+            font-size: 0.95rem;
+            color: var(--gray-text);
+            margin-top: 15px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .template-info {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: rgba(52, 152, 219, 0.05);
+            border-left: 5px solid var(--accent-color);
+            border-radius: 10px;
+        }
+        
+        .template-download-btn {
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .template-download-btn i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .template-download-btn .file-format {
+            display: inline-block;
+            font-size: 0.85rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Step indicators */
+        .steps-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .steps-container::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background-color: rgba(52, 152, 219, 0.2);
+            z-index: 1;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-number {
+            background-color: var(--accent-color);
+            color: var(--light-text);
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .step-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-text);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-title {
+            color: var(--accent-color);
+        }
+        
+        /* Animation for the loading spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(52, 152, 219, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        /* Make containers utilize full width */
+        .container-fluid {
+            padding-left: 30px;
+            padding-right: 30px;
+        }
+        
+        .step-instructions {
+            padding: 15px;
+            background-color: rgba(52, 152, 219, 0.05);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--accent-color);
+        }
+        
+        .step-instructions h5 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-instructions h5 i {
+            margin-right: 10px;
+        }
+        
+        .step-instructions p {
+            color: var(--gray-text);
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar (Unchanged) -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Legal Arena</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if user %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.picture %}
+                            <img src="{{ user.picture }}" alt="{{ user.name }}" class="user-image">
+                            {% endif %}
+                            {{ user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/">Home</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Tools Container (Full Width) -->
+    <div class="container-fluid">
+        <div class="tools-container">
+            <h3 class="section-title">
+                <i class="fas fa-tools"></i> Legal Arena Assessment Tool
+            </h3>
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="tool-card">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <div class="tool-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <h4 class="mt-3 mb-3">Response Evaluation</h4>
+                                <p class="text-muted">Upload a spreadsheet with questions and answers to evaluate the quality of legal responses.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Step indicators -->
+                        <div class="steps-container">
+                            <div class="step active" id="step1">
+                                <div class="step-number">1</div>
+                                <div class="step-title">Download & Fill</div>
+                            </div>
+                            <div class="step" id="step2">
+                                <div class="step-number">2</div>
+                                <div class="step-title">Upload</div>
+                            </div>
+                            <div class="step" id="step3">
+                                <div class="step-number">3</div>
+                                <div class="step-title">View Results</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 1 Instructions -->
+                        <div class="step-instructions" id="step1Instructions">
+                            <h5><i class="fas fa-info-circle"></i> Step 1: Download and Fill Template</h5>
+                            <p>First, download our question template file. Fill in your answers to all questions in the designated fields before proceeding to the next step.</p>
+                        </div>
+                        
+                        <div class="template-info">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-download me-2 fs-4 text-primary"></i>
+                                <h5 class="mb-0">Download Template</h5>
+                            </div>
+                            <p class="mb-4">Click the button below to download our template file (Excel format).</p>
+                            
+                            <!-- Simple Download Button (no dropdown) -->
+                            <div class="mx-auto" style="max-width: 350px;">
+                                <a href="/static/Legal_Questions.xlsx" class="btn btn-primary template-download-btn" id="downloadTemplateBtn">
+                                    <i class="fas fa-download"></i> Download Template
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2 Instructions -->
+                        <div class="step-instructions" id="step2Instructions">
+                            <h5><i class="fas fa-upload"></i> Step 2: Upload Your Completed File</h5>
+                            <p>After filling in all required information, upload your completed file here for evaluation.</p>
+                        </div>
+                        
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h5 class="mb-3">Drag & Drop your file here</h5>
+                                <p class="mb-3">or</p>
+                                <label for="fileInput" class="btn btn-primary">
+                                    <i class="fas fa-folder-open me-2"></i> Browse Files
+                                </label>
+                                <input type="file" id="fileInput" name="file" style="display: none;" accept=".csv, .xlsx">
+                                <p class="instructions mt-3">
+                                    Accepted file formats: .csv, .xlsx<br>
+                                    Max file size: 5MB
+                                </p>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" id="evaluateBtn" class="btn btn-primary" disabled>
+                                    <i class="fas fa-chart-bar me-2"></i> Evaluate Responses
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Step 3 Instructions (initially hidden) -->
+                        <div class="step-instructions" id="step3Instructions" style="display: none;">
+                            <h5><i class="fas fa-chart-bar"></i> Step 3: Review Your Evaluation Results</h5>
+                            <p>Here are your evaluation results. The scores below indicate the quality of your responses based on different metrics.</p>
+                        </div>
+                        
+                        <!-- Loading spinner -->
+                        <div class="loading-spinner" id="loadingSpinner">
+                            <div class="spinner"></div>
+                            <p class="mt-3 fs-5">Processing your file...</p>
+                            <p class="text-muted">This may take a few moments depending on the file size.</p>
+                        </div>
+                        
+                        <!-- Results container (initially hidden) -->
+                        <div class="results-container" id="resultsContainer">
+                            <h4 class="mb-4 text-center">Evaluation Results</h4>
+                            
+                            <div class="score-card">
+                                <div class="score-title">Aggregated Scores</div>
+                                <div id="aggregatedScores">
+                                    <!-- Scores will be inserted here by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-4">
+                                <button id="resetBtn" class="btn btn-outline-secondary">
+                                    <i class="fas fa-redo me-2"></i> Evaluate Another File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & jQuery JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            const uploadArea = $("#uploadArea");
+            const fileInput = $("#fileInput");
+            const uploadForm = $("#uploadForm");
+            const evaluateBtn = $("#evaluateBtn");
+            const loadingSpinner = $("#loadingSpinner");
+            const resultsContainer = $("#resultsContainer");
+            const aggregatedScores = $("#aggregatedScores");
+            const resetBtn = $("#resetBtn");
+            const downloadTemplateBtn = $("#downloadTemplateBtn");
+            const step1Instructions = $("#step1Instructions");
+            const step2Instructions = $("#step2Instructions");
+            const step3Instructions = $("#step3Instructions");
+            
+            let selectedFile = null;
+            
+            // Handle file selection through the browse button
+            fileInput.on("change", function() {
+                selectedFile = this.files[0];
+                if (selectedFile) {
+                    handleFileSelection(selectedFile);
+                }
+            });
+            
+            // Handle drag and drop
+            uploadArea.on("dragover", function(e) {
+                e.preventDefault();
+                $(this).addClass("bg-light");
+            });
+            
+            uploadArea.on("dragleave", function(e) {
+                e.preventDefault();
+                $(this).removeClass("bg-light");
+            });
+            
+            uploadArea.on("drop", function(e) {
+                e.preventDefault();
+                $(this).removeClass("bg-light");
+                
+                const files = e.originalEvent.dataTransfer.files;
+                if (files.length) {
+                    fileInput[0].files = files;
+                    selectedFile = files[0];
+                    handleFileSelection(selectedFile);
+                }
+            });
+            
+            // Handle file selection logic
+            function handleFileSelection(file) {
+                const fileSize = file.size / 1024 / 1024; // Size in MB
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                
+                if (fileSize > 5) {
+                    alert("File size exceeds 5MB limit.");
+                    resetFileInput();
+                    return;
+                }
+                
+                if (!["csv", "xlsx"].includes(fileExt)) {
+                    alert("Only CSV and Excel files are allowed.");
+                    resetFileInput();
+                    return;
+                }
+                
+                // Update step indicators
+                $("#step1").removeClass("active");
+                $("#step2").addClass("active");
+                
+                // Update upload area to show selected file
+                uploadArea.html(`
+                    <div class="upload-icon">
+                        <i class="fas fa-file-${fileExt === 'csv' ? 'csv' : 'excel'} text-success"></i>
+                    </div>
+                    <h5 class="mt-3">${file.name}</h5>
+                    <p class="text-muted">${(fileSize).toFixed(2)} MB</p>
+                    <button type="button" id="changeFileBtn" class="btn btn-outline-secondary mt-3">
+                        <i class="fas fa-exchange-alt me-2"></i> Change File
+                    </button>
+                `);
+                
+                // Enable the evaluate button
+                evaluateBtn.prop("disabled", false);
+                
+                // Add event listener to the change file button
+                $("#changeFileBtn").on("click", function(e) {
+                    e.preventDefault();
+                    resetFileInput();
+                    restoreUploadArea();
+                    
+                    // Reset step indicators
+                    $("#step2").removeClass("active");
+                    $("#step1").addClass("active");
+                });
+            }
+            
+            // Reset file input
+            function resetFileInput() {
+                fileInput.val("");
+                selectedFile = null;
+                evaluateBtn.prop("disabled", true);
+            }
+            
+            // Restore upload area to original state
+            function restoreUploadArea() {
+                uploadArea.html(`
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h5 class="mb-3">Drag & Drop your file here</h5>
+                    <p class="mb-3">or</p>
+                    <label for="fileInput" class="btn btn-primary">
+                        <i class="fas fa-folder-open me-2"></i> Browse Files
+                    </label>
+                    <input type="file" id="fileInput" name="file" style="display: none;" accept=".csv, .xlsx">
+                    <p class="instructions mt-3">
+                        Accepted file formats: .csv, .xlsx<br>
+                        Max file size: 5MB
+                    </p>
+                `);
+                
+                // Reinitialize the file input event listener
+                $("#fileInput").on("change", function() {
+                    selectedFile = this.files[0];
+                    if (selectedFile) {
+                        handleFileSelection(selectedFile);
+                    }
+                });
+            }
+            
+            // Handle form submission
+            uploadForm.on("submit", function(e) {
+                e.preventDefault();
+                
+                if (!selectedFile) {
+                    alert("Please select a file to upload.");
+                    return;
+                }
+                
+                // Create FormData object
+                const formData = new FormData();
+                formData.append("file", selectedFile);
+                
+                // Show loading spinner
+                loadingSpinner.show();
+                uploadArea.hide();
+                evaluateBtn.prop("disabled", true);
+                step2Instructions.hide();
+                
+                // Send AJAX request
+                $.ajax({
+                    url: "/evaluate",
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // Hide loading spinner
+                        loadingSpinner.hide();
+                        
+                        // Update step indicators
+                        $("#step2").removeClass("active");
+                        $("#step3").addClass("active");
+                        
+                        // Show step 3 instructions
+                        step3Instructions.show();
+                        
+                        // Display results
+                        displayResults(response);
+                    },
+                    error: function(error) {
+                        // Hide loading spinner
+                        loadingSpinner.hide();
+                        
+                        // Reset step indicators
+                        $("#step2").removeClass("active");
+                        $("#step1").addClass("active");
+                        
+                        // Show error message
+                        alert("An error occurred while processing your file. Please try again.");
+                        console.error("Error:", error);
+                        
+                        // Reset form
+                        resetFileInput();
+                        restoreUploadArea();
+                        uploadArea.show();
+                        step2Instructions.show();
+                    }
+                });
+            });
+            
+            // Display evaluation results
+            function displayResults(response) {
+                // Clear previous results
+                aggregatedScores.empty();
+                
+                // Add aggregated scores
+                if (response.aggregated_scores) {
+                    Object.entries(response.aggregated_scores).forEach(([key, value]) => {
+                        // Format the key for display
+                        const formattedKey = key;
+                        
+                        // Create score item
+                        const scoreItem = $("<div>").addClass("score-item");
+                        
+                        // Add header with label and value
+                        const scoreHeader = $("<div>").addClass("score-header");
+                        const scoreLabel = $("<div>").addClass("score-label").text(formattedKey);
+                        const scoreValue = $("<div>").addClass("score-value").text(value.toFixed(2));
+                        
+                        scoreHeader.append(scoreLabel, scoreValue);
+                        scoreItem.append(scoreHeader);
+                        
+                        // Add visual bar
+                        const scoreBar = $("<div>").addClass("score-bar");
+                        
+                        // Normalize the score value based on its expected range
+                        let normalizedValue;
+                        if (key === "Hallucination Rate") {
+                            // For Hallucination Rate, lower is better (1 is best, 5 is worst)
+                            normalizedValue = 1 - ((value - 1) / 4);
+                        } else {
+                            // For other metrics, higher is better (5 is best, 1 is worst)
+                            normalizedValue = (value - 1) / 4;
+                        }
+                        
+                        // Set the width of the score fill based on the normalized value
+                        const scoreFill = $("<div>").addClass("score-fill").css("width", `${normalizedValue * 100}%`);
+                        
+                        // Color based on score
+                        let color;
+                        if (key === "Hallucination Rate") {
+                            // For Hallucination Rate, red is bad (high value), green is good (low value)
+                            if (value <= 2) color = "#4CAF50"; // green
+                            else if (value <= 3) color = "#FFC107"; // yellow
+                            else color = "#F44336"; // red
+                        } else {
+                            // For other metrics, green is good (high value), red is bad (low value)
+                            if (value >= 4) color = "#4CAF50"; // green
+                            else if (value >= 3) color = "#FFC107"; // yellow
+                            else color = "#F44336"; // red
+                        }
+                        
+                        scoreFill.css("background-color", color);
+                        scoreBar.append(scoreFill);
+                        
+                        // Add bar to the score item
+                        scoreItem.append(scoreBar);
+                        
+                        // Add score item to the container
+                        aggregatedScores.append(scoreItem);
+                        
+                        // Animate the score fill width for visual effect
+                        setTimeout(() => {
+                            scoreFill.css("width", `${normalizedValue * 100}%`);
+                        }, 100);
+                    });
+                }
+                
+                // Show results container with animation
+                resultsContainer.fadeIn(500);
+            }
+            
+            // Reset button
+            resetBtn.on("click", function() {
+                // Hide results container and step 3 instructions
+                resultsContainer.hide();
+                step3Instructions.hide();
+                
+                // Show step 1 instructions
+                step1Instructions.show();
+                step2Instructions.show();
+                
+                // Reset file input
+                resetFileInput();
+                
+                // Restore upload area
+                restoreUploadArea();
+                
+                // Show upload area
+                uploadArea.show();
+                
+                // Reset step indicators
+                $(".step").removeClass("active");
+                $("#step1").addClass("active");
+            });
+            
+            // Handle click on upload area
+            uploadArea.on("click", function() {
+                fileInput.click();
+            });
+        });
+    </script>
+</body>
+</html>
