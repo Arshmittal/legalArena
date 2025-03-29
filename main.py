@@ -49,22 +49,40 @@ DIFY_WORKFLOW_SECRET = os.getenv("DIFY_WORKFLOW_SECRET")
 ALLOWED_EXTENSIONS = {"csv", "xlsx"}
 
 # OAuth Setup
-def configure_oauth(app):
-    oauth = OAuth(app)
-    google = oauth.register(
-        name='google',
-        client_id=os.getenv('GOOGLE_CLIENT_ID'),
-        client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
-        authorize_url='https://accounts.google.com/o/oauth2/auth',
-        access_token_url='https://oauth2.googleapis.com/token',
-        api_base_url='https://www.googleapis.com/oauth2/v3/',
-        userinfo_endpoint='https://www.googleapis.com/oauth2/v3/userinfo',
-        client_kwargs={'scope': 'openid email profile'},
-        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration"
-    )
-    return oauth, google
+# def configure_oauth(app):
+#     # oauth = OAuth(app)
+#     # google = oauth.register(
+#     #     name='google',
+#     #     client_id=os.getenv('GOOGLE_CLIENT_ID'),
+#     #     client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+#     #     authorize_url='https://accounts.google.com/o/oauth2/auth',
+#     #     access_token_url='https://oauth2.googleapis.com/token',
+#     #     api_base_url='https://www.googleapis.com/oauth2/v3/',
+#     #     userinfo_endpoint='https://www.googleapis.com/oauth2/v3/userinfo',
+#     #     client_kwargs={'scope': 'openid email profile'},
+#     #     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration"
+#     # )
+#     # return oauth, google
 
-oauth, google = configure_oauth(app)
+API_URL = os.getenv('API_URL')
+API_KEY = os.getenv('API_KEY')
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+SECRET_KEY = os.getenv('SECRET_KEY')
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile',
+        'prompt': 'select_account'
+    }
+)
+
+# oauth, google = configure_oauth(app)
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -102,14 +120,95 @@ def call_dify_workflow(question, user_answer, ground_truth):
 def home():
     return render_template("index.html", user=session.get("user"))
 
-@app.route("/login")
+# @app.route("/login")
+# def login():
+#     session.clear()
+#     state = os.urandom(16).hex()  # Generate a unique state
+#     session['oauth_state'] = state  # Store state in session
+#     session.modified = True  # Ensure session updates
+#     redirect_uri = url_for('google_callback', _external=True)
+#     return google.authorize_redirect(redirect_uri, state=state, prompt="select_account")  # ✅ Force account selection
+
+@app.route('/login')
 def login():
     session.clear()
-    state = os.urandom(16).hex()  # Generate a unique state
-    session['oauth_state'] = state  # Store state in session
-    session.modified = True  # Ensure session updates
+    session['oauth_state'] = os.urandom(16).hex()
+    session.modified = True
     redirect_uri = url_for('google_callback', _external=True)
-    return google.authorize_redirect(redirect_uri, state=state, prompt="select_account")  # ✅ Force account selection
+    return google.authorize_redirect(
+        redirect_uri=redirect_uri,
+        state=session['oauth_state']
+    )
+
+@app.route('/google/callback')
+def google_callback():
+    try:
+        state = request.args.get('state')
+        stored_state = session.get('oauth_state')
+
+        if not state or not stored_state or state != stored_state:
+            raise ValueError("State verification failed")
+        
+        session.pop('oauth_state', None)
+
+        token = google.authorize_access_token()
+        if not token:
+            raise ValueError("Failed to get access token")
+
+        # Get user info from Google
+        resp = google.get('https://www.googleapis.com/oauth2/v3/userinfo', token=token)
+        user_info = resp.json()
+        
+        if not user_info or 'email' not in user_info:
+            raise ValueError("Failed to get user info")
+
+        # Store user data and OAuth token in MongoDB
+        user_data = {
+            "name": user_info.get("name", "User"),
+            "email": user_info["email"],
+            "picture": user_info.get("picture", "/static/default-profile.png"),
+            "last_login": datetime.utcnow(),
+            "oauth_token": token  # Store OAuth token for future API requests
+        }
+
+        users_collection.update_one(
+            {"email": user_data["email"]},
+            {"$set": user_data},
+            upsert=True
+        )
+
+        session.permanent = True
+        session['user'] = user_data
+
+        return redirect(url_for('home'))
+
+    except Exception as e:
+        app.logger.error(f"Error in Google callback: {str(e)}")
+        session.clear()
+        return render_template('error.html', error="Authentication failed. Please try again.")
+
+    
+
+
+
+
+@app.route('/login_page', methods=['GET'])
+def login_page():
+   return redirect(url_for('login'))
+
+
+
+
+@app.route('/check-login-status', methods=['GET'])
+def check_login_status():
+    user = session.get('user')  # Retrieve the user from the session
+    if user:  # Check if the user exists in the session
+        return jsonify({'loggedIn': True})  # User is logged in
+    return jsonify({'loggedIn': False})  # User is not logged in
+
+
+
+
 
 def load_ground_truth_data(ground_truth_file):
     try:
@@ -130,25 +229,25 @@ def load_ground_truth_data(ground_truth_file):
 
 # Replace the existing ground truth loading code with this
 ground_truth_data = load_ground_truth_data(GROUND_TRUTH_FILE)
-@app.route('/google/callback')
-def google_callback():
-    try:
-        token = google.authorize_access_token()
-        user_info = google.get('https://www.googleapis.com/oauth2/v3/userinfo').json()
-        if 'email' not in user_info:
-            raise ValueError("Invalid user info received")
-        session["user"] = user_info
-        if not users_collection.find_one({"email": user_info["email"]}):
-            users_collection.insert_one({
-                "email": user_info["email"],
-                "name": user_info.get("name", ""),
-                "picture": user_info.get("picture", ""),
-                "created_at": datetime.now()
-            })
-        return redirect(url_for("home"))
-    except Exception as e:
-        logging.error(f"Google OAuth Error: {str(e)}")
-        return jsonify({"error": "Authentication failed"}), 500
+# @app.route('/google/callback')
+# def google_callback():
+#     try:
+#         token = google.authorize_access_token()
+#         user_info = google.get('https://www.googleapis.com/oauth2/v3/userinfo').json()
+#         if 'email' not in user_info:
+#             raise ValueError("Invalid user info received")
+#         session["user"] = user_info
+#         if not users_collection.find_one({"email": user_info["email"]}):
+#             users_collection.insert_one({
+#                 "email": user_info["email"],
+#                 "name": user_info.get("name", ""),
+#                 "picture": user_info.get("picture", ""),
+#                 "created_at": datetime.now()
+#             })
+#         return redirect(url_for("home"))
+#     except Exception as e:
+#         logging.error(f"Google OAuth Error: {str(e)}")
+#         return jsonify({"error": "Authentication failed"}), 500
     
 @app.route("/tools")
 def tool():
