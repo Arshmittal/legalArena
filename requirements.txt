@@ -1,3 +1,5 @@
 flask
+pandas
+
 gunicorn
 python-dotenv  # If using environment variables from .env
