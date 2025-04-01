@@ -14,10 +14,15 @@
             --primary-color: #2C3E50;       /* Deep blue-gray for main elements */
             --secondary-color: #34495E;     /* Slightly lighter blue-gray */
             --accent-color: #3498DB;        /* Bright, professional blue */
-            --background-color: #F4F6F7;    /* Light, soft gray background */
-            --text-color: #2C3E50;          /* Dark text color */
+            --background-color: #1E2130;    /* Dark background color */
+            --card-background: #2C3240;     /* Slightly lighter card background */
+            --text-color: #E9ECEF;          /* Light text color */
             --light-text: #FFFFFF;          /* White text for contrast */
-            --gray-text: #7F8C8D;           /* Soft gray for secondary text */
+            --gray-text: #ADB5BD;           /* Soft gray for secondary text */
+            --button-color: #3498DB;        /* Button color */
+            --border-color: #4B5563;        /* Border color */
+            --highlight-color: #F39C12;     /* Yellow highlight */
+            --bad-color: #E74C3C;           /* Red for "both bad" option */
         }
 
         * {
@@ -326,7 +331,10 @@
         }
 
         // Compare Selected Tools
-        function compareTwoTools() {
+        // Add this to your existing JavaScript in compare.html
+
+// Modify the compareTwoTools function to retrieve votes from database
+function compareTwoTools() {
     const tool1Id = parseInt(tool1Select.value);
     const tool2Id = parseInt(tool2Select.value);
 
@@ -343,59 +351,96 @@
     const tool1 = legalAITools.find(tool => tool.id === tool1Id);
     const tool2 = legalAITools.find(tool => tool.id === tool2Id);
 
-    comparisonArea.innerHTML = `
-        <div class="tool-card">
-            <h2>${tool1.name}</h2>
-            <div class="tool-query">
-                <strong>Query:</strong> ${tool1.query}
-            </div>
-            <div class="tool-response">
-                <ol>
-                    ${tool1.response.map(item => `<li>${item}</li>`).join('')}
-                </ol>
-            </div>
-            <div class="voting-section">
-                <span class="vote-count" id="tool${tool1.id}-votes">0 Votes</span>
-                <button class="vote-btn" data-tool-id="${tool1.id}">
-                    <i class="fas fa-thumbs-up me-2"></i>Vote
-                </button>
-            </div>
-        </div>
-        <div class="tool-card">
-            <h2>${tool2.name}</h2>
-            <div class="tool-query">
-                <strong>Query:</strong> ${tool2.query}
-            </div>
-            <div class="tool-response">
-                <ol>
-                    ${tool2.response.map(item => `<li>${item}</li>`).join('')}
-                </ol>
-            </div>
-            <div class="voting-section">
-                <span class="vote-count" id="tool${tool2.id}-votes">0 Votes</span>
-                <button class="vote-btn" data-tool-id="${tool2.id}">
-                    <i class="fas fa-thumbs-up me-2"></i>Vote
-                </button>
-            </div>
-        </div>
-    `;
+    // First, get current vote counts from server
+    fetch('/get-tool-votes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            toolIds: [tool1Id, tool2Id]
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const tool1Votes = data.votes[tool1Id] || 0;
+        const tool2Votes = data.votes[tool2Id] || 0;
 
-    // Attach voting functionality dynamically after rendering
-    const voteButtons = document.querySelectorAll('.vote-btn');
-    voteButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const toolId = button.getAttribute('data-tool-id');
-            const voteCountElement = document.getElementById(`tool${toolId}-votes`); // Match the correct tool ID dynamically
+        comparisonArea.innerHTML = `
+            <div class="tool-card">
+                <h2>${tool1.name}</h2>
+                <div class="tool-query">
+                    <strong>Query:</strong> ${tool1.query}
+                </div>
+                <div class="tool-response">
+                    <ol>
+                        ${tool1.response.map(item => `<li>${item}</li>`).join('')}
+                    </ol>
+                </div>
+                <div class="voting-section">
+                    <span class="vote-count" id="tool${tool1.id}-votes">${tool1Votes} Votes</span>
+                    <button class="vote-btn" data-tool-id="${tool1.id}">
+                        <i class="fas fa-thumbs-up me-2"></i>Vote
+                    </button>
+                </div>
+            </div>
+            <div class="tool-card">
+                <h2>${tool2.name}</h2>
+                <div class="tool-query">
+                    <strong>Query:</strong> ${tool2.query}
+                </div>
+                <div class="tool-response">
+                    <ol>
+                        ${tool2.response.map(item => `<li>${item}</li>`).join('')}
+                    </ol>
+                </div>
+                <div class="voting-section">
+                    <span class="vote-count" id="tool${tool2.id}-votes">${tool2Votes} Votes</span>
+                    <button class="vote-btn" data-tool-id="${tool2.id}">
+                        <i class="fas fa-thumbs-up me-2"></i>Vote
+                    </button>
+                </div>
+            </div>
+        `;
 
-            if (voteCountElement) {
-                let currentVotes = parseInt(voteCountElement.textContent);
-                voteCountElement.textContent = `${currentVotes + 1} Votes`;
-            }
+        // Attach voting functionality dynamically after rendering
+        const voteButtons = document.querySelectorAll('.vote-btn');
+        voteButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const toolId = button.getAttribute('data-tool-id');
+                
+                // Send vote to server
+                fetch('/vote-for-tool', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        toolId: parseInt(toolId)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update vote count display
+                        const voteCountElement = document.getElementById(`tool${toolId}-votes`);
+                        voteCountElement.textContent = `${data.votes} Votes`;
+                    } else {
+                        alert(data.message || 'Error processing vote');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error processing vote');
+                });
+            });
         });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error loading tool votes');
     });
 }
-
-        
 
         // Reset Comparison
         function resetComparison() {

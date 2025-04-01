@@ -18,13 +18,13 @@
         <!-- Right: Auth Section -->
         <div class="auth-container">
             <!-- Compare Tool Button (new button) -->
-            <a href="/compare" id="compareToolBtn" class="compare-tool-btn {% if not user %}disabled{% endif %}">
+           <!---- <a href="/compare" id="compareToolBtn" class="compare-tool-btn {% if not user %}disabled{% endif %}">
                 Compare Tool
-            </a>
+            </a>-->
             
             <!-- Test Tool Button (already existing) -->
             <a href="/tools" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
-                Test the Tool
+                Compare Model
             </a>
            
             {% if user %}
@@ -65,12 +65,12 @@
             
             <div class="button-container">
                 <a href="/tools" id="testToolBtn" class="explore-btn {% if not user %}disabled{% endif %}">
-                    Explore The Tool <i class="fas fa-arrow-right"></i>
+                    Compare The Model <i class="fas fa-arrow-right"></i>
                 </a>
                 
-                <a href="/compare" id="compareToolBtn" class="explore-btn compare-btn {% if not user %}disabled{% endif %}">
+              <!----  <a href="/compare" id="compareToolBtn" class="explore-btn compare-btn {% if not user %}disabled{% endif %}">
                     Compare Tools <i class="fas fa-balance-scale"></i>
-                </a>
+                </a>-->
             </div>
         </div>
     </div>
@@ -628,8 +628,8 @@
             <div class="timeline">
                 <div class="step">
                     <div class="step-card blue">
-                        <div class="step-number">Step 1: Download the file</div>
-                        <div class="step-description">SDownload our file of questions for your legal assessment.</div>
+                        <div class="step-number">Step 1: Send the Question</div>
+                        <div class="step-description">User have to enter the legal query.</div>
                     </div>
                     <div class="step-marker blue">
                         <i class="fas fa-cloud-upload-alt" style="color: white;"></i>
@@ -640,7 +640,7 @@
                 
                 <div class="step">
                     <div class="step-card green">
-                        <div class="step-number">Step 2: Upload the file </div>
+                        <div class="step-number">Step 2: Generated Response  </div>
                         <div class="step-description">Fill the file with answers to the questions and upload it to our tools.</div>
                     </div>
                     <div class="step-marker green">

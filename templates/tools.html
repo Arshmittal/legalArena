@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legal AI Assessment Tools</title>
+    <title>Legal Arena AI Comparison</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -14,10 +14,15 @@
             --primary-color: #2C3E50;       /* Deep blue-gray for main elements */
             --secondary-color: #34495E;     /* Slightly lighter blue-gray */
             --accent-color: #3498DB;        /* Bright, professional blue */
-            --background-color: #F4F6F7;    /* Light, soft gray background */
-            --text-color: #2C3E50;          /* Dark text color */
+            --background-color: #1E2130;    /* Dark background color */
+            --card-background: #2C3240;     /* Slightly lighter card background */
+            --text-color: #E9ECEF;          /* Light text color */
             --light-text: #FFFFFF;          /* White text for contrast */
-            --gray-text: #7F8C8D;           /* Soft gray for secondary text */
+            --gray-text: #ADB5BD;           /* Soft gray for secondary text */
+            --button-color: #3498DB;        /* Button color */
+            --border-color: #4B5563;        /* Border color */
+            --highlight-color: #F39C12;     /* Yellow highlight */
+            --bad-color: #E74C3C;           /* Red for "both bad" option */
         }
 
         body {
@@ -31,18 +36,20 @@
             background-color: var(--primary-color);
         }
         
-        .tools-container {
+        .comparison-container {
             width: 100%;
-            margin: 0 auto;
-            padding: 30px;
-            background-color: white;
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            margin: 10px auto;
+            padding: 20px;
+            background-color: var(--card-background);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
             margin-top: 30px;
             margin-bottom: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
         
         .section-title {
-            color: var(--accent-color);
+            color: var(--light-text);
             font-weight: 700;
             margin-bottom: 30px;
             padding-bottom: 15px;
@@ -60,169 +67,228 @@
             font-size: 1.2rem;
         }
         
-        .tool-card {
-            border: none;
-            padding: 30px;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
+        .model-card {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            height: 100%;
         }
         
-        .tool-icon {
-            font-size: 2.5rem;
+        .model-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .model-icon {
+            font-size: 1.2rem;
             color: var(--accent-color);
-            margin-bottom: 20px;
+            margin-right: 10px;
             background-color: rgba(52, 152, 219, 0.1);
-            width: 70px;
-            height: 70px;
-            border-radius: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
-        .upload-area {
-            border: 3px dashed var(--accent-color);
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            margin: 30px 0;
+        .model-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--light-text);
+            margin-bottom: 0;
+        }
+        
+        .chat-container {
+            overflow-y: auto;
+            height: 450px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            max-width: 90%;
+        }
+        
+        .user-message {
+            background-color: var(--secondary-color);
+            color: var(--light-text);
+            padding: 10px 15px;
+            border-radius: 15px 15px 0 15px;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .bot-message {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 10px 15px;
+            border-radius: 15px 15px 15px 0;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        
+        .copy-button {
+            background: none;
+            border: none;
+            color: var(--gray-text);
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .copy-button:hover {
+            color: var(--light-text);
+        }
+        
+        .message-input-container {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .message-input {
+            background-color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            color: var(--light-text);
+            border-radius: 20px;
+            padding: 10px 15px;
+            outline: none;
+            width: 100%;
+        }
+
+        .message-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .send-button {
+            background-color: var(--button-color);
+            color: var(--light-text);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            margin-left: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background-color: rgba(52, 152, 219, 0.05);
         }
         
-        .upload-area:hover {
-            background-color: rgba(52, 152, 219, 0.1);
-            transform: scale(1.01);
-        }
-        
-        .upload-icon {
-            font-size: 3.5rem;
-            color: var(--accent-color);
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-        
-        .btn-primary {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-            border-radius: 30px;
-            padding: 12px 30px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
+        .send-button:hover {
             background-color: #2980b9;
-            border-color: #2980b9;
-            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
             transform: translateY(-2px);
         }
         
-        .btn-outline-primary {
-            color: var(--accent-color);
-            border-color: var(--accent-color);
-            border-radius: 30px;
-            padding: 10px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: var(--accent-color);
-            color: var(--light-text);
-            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
-        }
-        
-        .btn-outline-secondary {
-            color: var(--gray-text);
-            border-color: #dadce0;
-            border-radius: 30px;
-            padding: 10px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-secondary:hover {
-            background-color: #f1f3f4;
-            color: var(--text-color);
-            border-color: #dadce0;
-        }
-        
-        .results-container {
-            margin-top: 40px;
-            display: none;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .score-card {
-            background-color: rgba(52, 152, 219, 0.05);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border-left: 5px solid var(--accent-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        
-        .score-title {
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: var(--accent-color);
-        }
-        
-        .score-item {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 18px;
-        }
-        
-        .score-header {
+        .voting-container {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin: 20px 0;
+            gap: 10px;
         }
         
-        .score-label {
-            font-weight: 500;
+        .vote-button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background);
+            color: var(--light-text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        .vote-a {
+            background-color: var(--card-background);
+        }
+        
+        .vote-a:hover, .vote-a.active {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-color: var(--accent-color);
+        }
+        
+        .vote-b {
+            background-color: var(--card-background);
+        }
+        
+        .vote-b:hover, .vote-b.active {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-color: var(--accent-color);
+        }
+        
+        .vote-tie {
+            background-color: var(--card-background);
+        }
+        
+        .vote-tie:hover, .vote-tie.active {
+            background-color: rgba(243, 156, 18, 0.2);
+            border-color: var(--highlight-color);
+        }
+        
+        .vote-bad {
+            background-color: var(--card-background);
+        }
+        
+        .vote-bad:hover, .vote-bad.active {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-color: var(--bad-color);
+        }
+        
+        .vote-button i {
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+   
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
             color: var(--gray-text);
-        }
-        
-        .score-value {
-            font-weight: 700;
-            color: var(--text-color);
-        }
-        
-        .score-bar {
-            height: 10px;
-            background-color: #e9ecef;
-            border-radius: 20px;
-            margin-top: 5px;
+            transition: all 0.3s ease;
             position: relative;
-            width: 100%;
-            overflow: hidden;
         }
         
-        .score-fill {
-            height: 100%;
-            border-radius: 20px;
+        .tab.active {
+            color: var(--light-text);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .tab.active::after {
+            content: '';
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
-            transition: width 1s ease-out;
+            width: 100%;
+            height: 3px;
+            background-color: var(--accent-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
         }
         
         .user-image {
@@ -232,164 +298,43 @@
             margin-right: 5px;
         }
         
-        .instructions {
-            font-size: 0.95rem;
-            color: var(--gray-text);
-            margin-top: 15px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            margin: 40px 0;
-        }
-        
-        .template-info {
-            margin-bottom: 25px;
-            padding: 20px;
-            background-color: rgba(52, 152, 219, 0.05);
-            border-left: 5px solid var(--accent-color);
-            border-radius: 10px;
-        }
-        
-        .template-download-btn {
-            padding: 12px 25px;
-            border-radius: 30px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-        
-        .template-download-btn i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-        
-        .template-download-btn .file-format {
-            display: inline-block;
-            font-size: 0.85rem;
-            padding: 2px 8px;
-            border-radius: 20px;
-            margin-left: 8px;
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Step indicators */
-        .steps-container {
-            display: flex;
-            justify-content: space-between;
-            margin: 40px 0;
-            position: relative;
-        }
-        
-        .steps-container::before {
-            content: '';
-            position: absolute;
-            top: 24px;
-            left: 10%;
-            right: 10%;
-            height: 3px;
-            background-color: rgba(52, 152, 219, 0.2);
-            z-index: 1;
-        }
-        
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .step-number {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: rgba(52, 152, 219, 0.1);
-            color: var(--accent-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-        
-        .step.active .step-number {
-            background-color: var(--accent-color);
-            color: var(--light-text);
-            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
-        }
-        
-        .step-title {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--gray-text);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .step.active .step-title {
-            color: var(--accent-color);
-        }
-        
-        /* Animation for the loading spinner */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .message {
+            animation: fadeIn 0.3s ease-in-out;
         }
         
         .spinner {
             display: inline-block;
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(52, 152, 219, 0.2);
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(52, 152, 219, 0.2);
             border-radius: 50%;
             border-top-color: var(--accent-color);
             animation: spin 1s ease-in-out infinite;
-        }
-        
-        /* Make containers utilize full width */
-        .container-fluid {
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-        
-        .step-instructions {
-            padding: 15px;
-            background-color: rgba(52, 152, 219, 0.05);
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 5px solid var(--accent-color);
-        }
-        
-        .step-instructions h5 {
-            color: var(--accent-color);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .step-instructions h5 i {
             margin-right: 10px;
         }
         
-        .step-instructions p {
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-message {
+            display: flex;
+            align-items: center;
             color: var(--gray-text);
-            margin-bottom: 0;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar (Unchanged) -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <!-- Navigation Bar -->
+     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">Legal Arena</a>
+            <a class="navbar-brand" href="/">LegalArena</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -419,122 +364,76 @@
         </div>
     </nav>
 
-    <!-- Tools Container (Full Width) -->
-    <div class="container-fluid">
-        <div class="tools-container">
-            <h3 class="section-title">
-                <i class="fas fa-tools"></i> Legal Arena Assessment Tool
-            </h3>
-            
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="tool-card">
-                        <div class="d-flex justify-content-between align-items-start mb-4">
-                            <div>
-                                <div class="tool-icon">
-                                    <i class="fas fa-file-alt"></i>
+    <!-- Tab Container -->
+    <div class="container">
+        <div class="tab-container">
+            <div class="tab-content active" id="chat-content">
+                <!-- Comparison Container -->
+                <div class="comparison-container">
+                    <h3 class="section-title">
+                        <i class="fas fa-balance-scale"></i> Legal AI Comparison
+                    </h3>
+                    
+                    <div class="row">
+                        <!-- Model A -->
+                        <div class="col-lg-6">
+                            <div class="model-card">
+                                <div class="model-header">
+                                    <div class="model-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <h4 class="model-title">Model A</h4>
                                 </div>
-                                <h4 class="mt-3 mb-3">Response Evaluation</h4>
-                                <p class="text-muted">Upload a spreadsheet with questions and answers to evaluate the quality of legal responses.</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Step indicators -->
-                        <div class="steps-container">
-                            <div class="step active" id="step1">
-                                <div class="step-number">1</div>
-                                <div class="step-title">Download & Fill</div>
-                            </div>
-                            <div class="step" id="step2">
-                                <div class="step-number">2</div>
-                                <div class="step-title">Upload</div>
-                            </div>
-                            <div class="step" id="step3">
-                                <div class="step-number">3</div>
-                                <div class="step-title">View Results</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 1 Instructions -->
-                        <div class="step-instructions" id="step1Instructions">
-                            <h5><i class="fas fa-info-circle"></i> Step 1: Download and Fill Template</h5>
-                            <p>First, download our question template file. Fill in your answers to all questions in the designated fields before proceeding to the next step.</p>
-                        </div>
-                        
-                        <div class="template-info">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-download me-2 fs-4 text-primary"></i>
-                                <h5 class="mb-0">Download Template</h5>
-                            </div>
-                            <p class="mb-4">Click the button below to download our template file (Excel format).</p>
-                            
-                            <!-- Simple Download Button (no dropdown) -->
-                            <div class="mx-auto" style="max-width: 350px;">
-                                <a href="/static/Compliance_Questions.xlsx" class="btn btn-primary template-download-btn" id="downloadTemplateBtn">
-                                    <i class="fas fa-download"></i> Download Template
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 2 Instructions -->
-                        <div class="step-instructions" id="step2Instructions">
-                            <h5><i class="fas fa-upload"></i> Step 2: Upload Your Completed File</h5>
-                            <p>After filling in all required information, upload your completed file here for evaluation.</p>
-                        </div>
-                        
-                        <form id="uploadForm" enctype="multipart/form-data">
-                            <div class="upload-area" id="uploadArea">
-                                <div class="upload-icon">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                </div>
-                                <h5 class="mb-3">Drag & Drop your file here</h5>
-                                <p class="mb-3">or</p>
-                                <label for="fileInput" class="btn btn-primary">
-                                    <i class="fas fa-folder-open me-2"></i> Browse Files
-                                </label>
-                                <input type="file" id="fileInput" name="file" style="display: none;" accept=".csv, .xlsx">
-                                <p class="instructions mt-3">
-                                    Accepted file formats: .csv, .xlsx<br>
-                                    Max file size: 5MB
-                                </p>
-                            </div>
-                            <div class="text-center">
-                                <button type="submit" id="evaluateBtn" class="btn btn-primary" disabled>
-                                    <i class="fas fa-chart-bar me-2"></i> Evaluate Responses
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <!-- Step 3 Instructions (initially hidden) -->
-                        <div class="step-instructions" id="step3Instructions" style="display: none;">
-                            <h5><i class="fas fa-chart-bar"></i> Step 3: Review Your Evaluation Results</h5>
-                            <p>Here are your evaluation results. The scores below indicate the quality of your responses based on different metrics.</p>
-                        </div>
-                        
-                        <!-- Loading spinner -->
-                        <div class="loading-spinner" id="loadingSpinner">
-                            <div class="spinner"></div>
-                            <p class="mt-3 fs-5">Processing your file...</p>
-                            <p class="text-muted">This may take a few moments depending on the file size.</p>
-                        </div>
-                        
-                        <!-- Results container (initially hidden) -->
-                        <div class="results-container" id="resultsContainer">
-                            <h4 class="mb-4 text-center">Evaluation Results</h4>
-                            
-                            <div class="score-card">
-                                <div class="score-title">Aggregated Scores</div>
-                                <div id="aggregatedScores">
-                                    <!-- Scores will be inserted here by JavaScript -->
+                                <div class="chat-container" id="modelAChat">
+                                    <!-- Messages will be dynamically added here -->
+                                   
                                 </div>
                             </div>
-                            
-                            <div class="text-center mt-4">
-                                <button id="resetBtn" class="btn btn-outline-secondary">
-                                    <i class="fas fa-redo me-2"></i> Evaluate Another File
-                                </button>
+                        </div>
+                        
+                        <!-- Model B -->
+                        <div class="col-lg-6">
+                            <div class="model-card">
+                                <div class="model-header">
+                                    <div class="model-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <h4 class="model-title">Model B</h4>
+                                </div>
+                                <div class="chat-container" id="modelBChat">
+                                    <!-- Messages will be dynamically added here -->
+                                 
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Voting Container -->
+                    <div class="voting-container">
+                        <button class="vote-button vote-a" id="voteA">
+                            <i class="fas fa-thumbs-up"></i> A is better
+                            <span class="vote-count ms-2"></span>
+                        </button>
+                        <button class="vote-button vote-b" id="voteB">
+                            <i class="fas fa-thumbs-up"></i> B is better
+                            <span class="vote-count ms-2"></span>
+                        </button>
+                        <button class="vote-button vote-tie" id="voteTie">
+                            <i class="fas fa-heart"></i> Tie
+                            <span class="vote-count ms-2"></span>
+                        </button>
+                        <button class="vote-button vote-bad" id="voteBad">
+                            <i class="fas fa-thumbs-down"></i> Both are bad
+                            <span class="vote-count ms-2"></span>
+                        </button>
+                    </div>
+                    
+                    <!-- Message Input -->
+                    <div class="message-input-container">
+                        <input type="text" class="message-input" id="messageInput" placeholder="Enter your prompt and press ENTER">
+                        <button class="send-button" id="sendButton">
+                            Send
+                        </button>
                     </div>
                 </div>
             </div>
@@ -547,296 +446,511 @@
     
     <script>
         $(document).ready(function() {
-            const uploadArea = $("#uploadArea");
-            const fileInput = $("#fileInput");
-            const uploadForm = $("#uploadForm");
-            const evaluateBtn = $("#evaluateBtn");
-            const loadingSpinner = $("#loadingSpinner");
-            const resultsContainer = $("#resultsContainer");
-            const aggregatedScores = $("#aggregatedScores");
-            const resetBtn = $("#resetBtn");
-            const downloadTemplateBtn = $("#downloadTemplateBtn");
-            const step1Instructions = $("#step1Instructions");
-            const step2Instructions = $("#step2Instructions");
-            const step3Instructions = $("#step3Instructions");
-            
-            let selectedFile = null;
-            
-            // Handle file selection through the browse button
-            fileInput.on("change", function() {
-                selectedFile = this.files[0];
-                if (selectedFile) {
-                    handleFileSelection(selectedFile);
-                }
-            });
-            
-            // Handle drag and drop
-            uploadArea.on("dragover", function(e) {
-                e.preventDefault();
-                $(this).addClass("bg-light");
-            });
-            
-            uploadArea.on("dragleave", function(e) {
-                e.preventDefault();
-                $(this).removeClass("bg-light");
-            });
-            
-            uploadArea.on("drop", function(e) {
-                e.preventDefault();
-                $(this).removeClass("bg-light");
-                
-                const files = e.originalEvent.dataTransfer.files;
-                if (files.length) {
-                    fileInput[0].files = files;
-                    selectedFile = files[0];
-                    handleFileSelection(selectedFile);
-                }
-            });
-            
-            // Handle file selection logic
-            function handleFileSelection(file) {
-                const fileSize = file.size / 1024 / 1024; // Size in MB
-                const fileExt = file.name.split('.').pop().toLowerCase();
-                
-                if (fileSize > 5) {
-                    alert("File size exceeds 5MB limit.");
-                    resetFileInput();
-                    return;
+    // Tab switching functionality
+    $('.tab').on('click', function() {
+        const tabId = $(this).data('tab');
+        
+        // Remove active class from all tabs and contents
+        $('.tab').removeClass('active');
+        $('.tab-content').removeClass('active');
+        
+        // Add active class to selected tab and content
+        $(this).addClass('active');
+        $(`#${tabId}-content`).addClass('active');
+    });
+    
+    // Check login status on page load
+    checkLoginStatus();
+    
+    // Load recent questions
+    loadRecentQuestions();
+    
+    // Voting functionality
+   // Add this to the existing script in the document
+
+// Add this to the existing script in the document
+
+$(document).ready(function() {
+    // Keep existing ready function code and add the following
+
+    // Track current comparison ID (this would be set when loading models)
+    let currentComparisonId = null;
+    
+    // Track the user's current vote for this comparison
+    let userCurrentVote = null;
+    
+    // Load vote counts when a comparison is loaded
+    function loadVoteCounts() {
+        if (!currentComparisonId) return;
+        
+        $.ajax({
+            url: '/get-tool-votes',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ 
+                toolIds: [
+                    `${currentComparisonId}_model_a`,
+                    `${currentComparisonId}_model_b`,
+                    `${currentComparisonId}_tie`,
+                    `${currentComparisonId}_both_bad`
+                ] 
+            }),
+            success: function(response) {
+                // Update UI with vote counts
+                if (response.votes) {
+                    updateVoteCountsUI(response.votes);
                 }
                 
-                if (!["csv", "xlsx"].includes(fileExt)) {
-                    alert("Only CSV and Excel files are allowed.");
-                    resetFileInput();
-                    return;
+                // Also check user's current vote for this comparison
+                checkUserCurrentVote();
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login_page';
+                } else {
+                    console.error('Failed to retrieve vote counts');
                 }
-                
-                // Update step indicators
-                $("#step1").removeClass("active");
-                $("#step2").addClass("active");
-                
-                // Update upload area to show selected file
-                uploadArea.html(`
-                    <div class="upload-icon">
-                        <i class="fas fa-file-${fileExt === 'csv' ? 'csv' : 'excel'} text-success"></i>
-                    </div>
-                    <h5 class="mt-3">${file.name}</h5>
-                    <p class="text-muted">${(fileSize).toFixed(2)} MB</p>
-                    <button type="button" id="changeFileBtn" class="btn btn-outline-secondary mt-3">
-                        <i class="fas fa-exchange-alt me-2"></i> Change File
-                    </button>
-                `);
-                
-                // Enable the evaluate button
-                evaluateBtn.prop("disabled", false);
-                
-                // Add event listener to the change file button
-                $("#changeFileBtn").on("click", function(e) {
-                    e.preventDefault();
-                    resetFileInput();
-                    restoreUploadArea();
-                    
-                    // Reset step indicators
-                    $("#step2").removeClass("active");
-                    $("#step1").addClass("active");
-                });
             }
-            
-            // Reset file input
-            function resetFileInput() {
-                fileInput.val("");
-                selectedFile = null;
-                evaluateBtn.prop("disabled", true);
-            }
-            
-            // Restore upload area to original state
-            function restoreUploadArea() {
-                uploadArea.html(`
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <h5 class="mb-3">Drag & Drop your file here</h5>
-                    <p class="mb-3">or</p>
-                    <label for="fileInput" class="btn btn-primary">
-                        <i class="fas fa-folder-open me-2"></i> Browse Files
-                    </label>
-                    <input type="file" id="fileInput" name="file" style="display: none;" accept=".csv, .xlsx">
-                    <p class="instructions mt-3">
-                        Accepted file formats: .csv, .xlsx<br>
-                        Max file size: 5MB
-                    </p>
-                `);
-                
-                // Reinitialize the file input event listener
-                $("#fileInput").on("change", function() {
-                    selectedFile = this.files[0];
-                    if (selectedFile) {
-                        handleFileSelection(selectedFile);
-                    }
-                });
-            }
-            
-            // Handle form submission
-            uploadForm.on("submit", function(e) {
-                e.preventDefault();
-                
-                if (!selectedFile) {
-                    alert("Please select a file to upload.");
-                    return;
-                }
-                
-                // Create FormData object
-                const formData = new FormData();
-                formData.append("file", selectedFile);
-                
-                // Show loading spinner
-                loadingSpinner.show();
-                uploadArea.hide();
-                evaluateBtn.prop("disabled", true);
-                step2Instructions.hide();
-                
-                // Send AJAX request
-                $.ajax({
-                    url: "/evaluate",
-                    type: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        // Hide loading spinner
-                        loadingSpinner.hide();
-                        
-                        // Update step indicators
-                        $("#step2").removeClass("active");
-                        $("#step3").addClass("active");
-                        
-                        // Show step 3 instructions
-                        step3Instructions.show();
-                        
-                        // Display results
-                        displayResults(response);
-                    },
-                    error: function(error) {
-                        // Hide loading spinner
-                        loadingSpinner.hide();
-                        
-                        // Reset step indicators
-                        $("#step2").removeClass("active");
-                        $("#step1").addClass("active");
-                        
-                        // Show error message
-                        alert("An error occurred while processing your file. Please try again.");
-                        console.error("Error:", error);
-                        
-                        // Reset form
-                        resetFileInput();
-                        restoreUploadArea();
-                        uploadArea.show();
-                        step2Instructions.show();
-                    }
-                });
-            });
-            
-            // Display evaluation results
-            function displayResults(response) {
-                // Clear previous results
-                aggregatedScores.empty();
-                
-                // Add aggregated scores
-                if (response.aggregated_scores) {
-                    Object.entries(response.aggregated_scores).forEach(([key, value]) => {
-                        // Format the key for display
-                        const formattedKey = key;
-                        
-                        // Create score item
-                        const scoreItem = $("<div>").addClass("score-item");
-                        
-                        // Add header with label and value
-                        const scoreHeader = $("<div>").addClass("score-header");
-                        const scoreLabel = $("<div>").addClass("score-label").text(formattedKey);
-                        const scoreValue = $("<div>").addClass("score-value").text(value.toFixed(2));
-                        
-                        scoreHeader.append(scoreLabel, scoreValue);
-                        scoreItem.append(scoreHeader);
-                        
-                        // Add visual bar
-                        const scoreBar = $("<div>").addClass("score-bar");
-                        
-                        // Normalize the score value based on its expected range
-                        let normalizedValue;
-                        if (key === "Hallucination Rate") {
-                            // For Hallucination Rate, lower is better (1 is best, 5 is worst)
-                            normalizedValue = 1 - ((value - 1) / 4);
-                        } else {
-                            // For other metrics, higher is better (5 is best, 1 is worst)
-                            normalizedValue = (value - 1) / 4;
-                        }
-                        
-                        // Set the width of the score fill based on the normalized value
-                        const scoreFill = $("<div>").addClass("score-fill").css("width", `${normalizedValue * 100}%`);
-                        
-                        // Color based on score
-                        let color;
-                        if (key === "Hallucination Rate") {
-                            // For Hallucination Rate, red is bad (high value), green is good (low value)
-                            if (value <= 2) color = "#4CAF50"; // green
-                            else if (value <= 3) color = "#FFC107"; // yellow
-                            else color = "#F44336"; // red
-                        } else {
-                            // For other metrics, green is good (high value), red is bad (low value)
-                            if (value >= 4) color = "#4CAF50"; // green
-                            else if (value >= 3) color = "#FFC107"; // yellow
-                            else color = "#F44336"; // red
-                        }
-                        
-                        scoreFill.css("background-color", color);
-                        scoreBar.append(scoreFill);
-                        
-                        // Add bar to the score item
-                        scoreItem.append(scoreBar);
-                        
-                        // Add score item to the container
-                        aggregatedScores.append(scoreItem);
-                        
-                        // Animate the score fill width for visual effect
-                        setTimeout(() => {
-                            scoreFill.css("width", `${normalizedValue * 100}%`);
-                        }, 100);
-                    });
-                }
-                
-                // Show results container with animation
-                resultsContainer.fadeIn(500);
-            }
-            
-            // Reset button
-            resetBtn.on("click", function() {
-                // Hide results container and step 3 instructions
-                resultsContainer.hide();
-                step3Instructions.hide();
-                
-                // Show step 1 instructions
-                step1Instructions.show();
-                step2Instructions.show();
-                
-                // Reset file input
-                resetFileInput();
-                
-                // Restore upload area
-                restoreUploadArea();
-                
-                // Show upload area
-                uploadArea.show();
-                
-                // Reset step indicators
-                $(".step").removeClass("active");
-                $("#step1").addClass("active");
-            });
-            
-            // Handle click on upload area
-            uploadArea.on("click", function() {
-                fileInput.click();
-            });
         });
+    }
+    
+    // Check which option the user has already voted for
+    function checkUserCurrentVote() {
+        if (!currentComparisonId) return;
+        
+        $.ajax({
+            url: '/get-user-vote',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ 
+                comparisonId: currentComparisonId
+            }),
+            success: function(response) {
+                if (response.voted && response.toolId) {
+                    userCurrentVote = response.toolId;
+                    
+                    // Highlight the button the user previously voted for
+                    highlightUserVote(userCurrentVote);
+                } else {
+                    userCurrentVote = null;
+                    $('.vote-button').removeClass('active');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login_page';
+                } else {
+                    console.error('Failed to retrieve user vote');
+                    userCurrentVote = null;
+                }
+            }
+        });
+    }
+    
+    // Highlight the button that represents the user's current vote
+    function highlightUserVote(toolId) {
+        // Remove active class from all buttons
+        $('.vote-button').removeClass('active');
+        
+        // Add active class to the appropriate button
+        if (toolId.includes('_model_a')) {
+            $('#voteA').addClass('active');
+        } else if (toolId.includes('_model_b')) {
+            $('#voteB').addClass('active');
+        } else if (toolId.includes('_tie')) {
+            $('#voteTie').addClass('active');
+        } else if (toolId.includes('_both_bad')) {
+            $('#voteBad').addClass('active');
+        }
+    }
+    
+    // Update the UI with vote counts
+    function updateVoteCountsUI(votes) {
+        // Update vote counts in each button
+        updateButtonVoteCount('voteA', votes[`${currentComparisonId}_model_a`] || 0);
+        updateButtonVoteCount('voteB', votes[`${currentComparisonId}_model_b`] || 0);
+        updateButtonVoteCount('voteTie', votes[`${currentComparisonId}_tie`] || 0);
+        updateButtonVoteCount('voteBad', votes[`${currentComparisonId}_both_bad`] || 0);
+    }
+    
+    // Update the vote count display for a specific button
+    function updateButtonVoteCount(buttonId, count) {
+        const $voteCountEl = $(`#${buttonId} .vote-count`);
+        
+        if (count > 0) {
+            $voteCountEl.text(`(${count})`);
+            $voteCountEl.show();
+        } else {
+            $voteCountEl.text('');
+            $voteCountEl.hide();
+        }
+    }
+    
+    // Update voting functionality to use the API
+    $('.vote-button').off('click').on('click', function() {
+        if (!currentComparisonId) {
+            showNotification('Please ask a question first to compare models.');
+            return;
+        }
+        
+        // Get the vote type based on button ID
+        const voteType = $(this).attr('id');
+        let newVoteToolId;
+        
+        // Map vote button to the corresponding tool ID
+        switch(voteType) {
+            case 'voteA':
+                newVoteToolId = `${currentComparisonId}_model_a`;
+                break;
+            case 'voteB':
+                newVoteToolId = `${currentComparisonId}_model_b`;
+                break;
+            case 'voteTie':
+                newVoteToolId = `${currentComparisonId}_tie`;
+                break;
+            case 'voteBad':
+                newVoteToolId = `${currentComparisonId}_both_bad`;
+                break;
+            default:
+                return;
+        }
+        
+        // If user is clicking the same button they already voted for, do nothing
+        if (userCurrentVote === newVoteToolId) {
+            showNotification('You have already voted for this option.');
+            return;
+        }
+        
+        // Send vote to backend
+        $.ajax({
+            url: '/change-vote',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                comparisonId: currentComparisonId,
+                previousToolId: userCurrentVote,
+                newToolId: newVoteToolId
+            }),
+            success: function(response) {
+                if (response.success) {
+                    // Update UI with new vote counts
+                    updateVoteCountsUI(response.votes);
+                    
+                    // Update the user's current vote
+                    userCurrentVote = newVoteToolId;
+                    
+                    // Update UI to highlight user's vote
+                    highlightUserVote(userCurrentVote);
+                    
+                    showNotification('Your vote has been recorded.');
+                } else {
+                    showNotification(response.message || 'Failed to record your vote.');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login_page';
+                } else {
+                    showNotification('Failed to record your vote.');
+                    console.error('Vote API call failed:', xhr.responseText);
+                }
+            }
+        });
+    });
+    
+    // Modify sendMessage function to set the comparison ID
+    const originalSendMessage = sendMessage;
+    sendMessage = function() {
+        const messageText = $('#messageInput').val().trim();
+        
+        if (messageText) {
+            // Generate a unique ID for this comparison
+            currentComparisonId = generateComparisonId(messageText);
+            
+            // Reset user's current vote for this new comparison
+            userCurrentVote = null;
+            
+            // Reset vote button highlights
+            $('.vote-button').removeClass('active');
+            
+            // Call the original function
+            originalSendMessage();
+        }
+    };
+    
+    // Add this to the success callback of the original sendMessage function
+    const originalAjaxSuccess = $.ajax;
+    $.ajax = function(options) {
+        if (options.url === '/query-models' && options.method === 'POST') {
+            const originalSuccess = options.success;
+            options.success = function(response) {
+                if (originalSuccess) {
+                    originalSuccess(response);
+                }
+                // Load vote counts after models respond
+                loadVoteCounts();
+            };
+        }
+        return originalAjaxSuccess.apply(this, arguments);
+    };
+    
+    // Generate a unique ID for the comparison based on the query
+    function generateComparisonId(query) {
+        // Simple hash function for query
+        let hash = 0;
+        for (let i = 0; i < query.length; i++) {
+            const char = query.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        
+        // Combine with timestamp for uniqueness
+        const timestamp = new Date().getTime();
+        return `comp_${Math.abs(hash)}_${timestamp}`;
+    }
+});
+    // Message sending functionality
+    $('#sendButton').on('click', function() {
+        sendMessage();
+    });
+    
+    // Also send on Enter key press
+    $('#messageInput').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            sendMessage();
+        }
+    });
+    
+    function checkLoginStatus() {
+        $.ajax({
+            url: '/check-login-status',
+            method: 'GET',
+            success: function(response) {
+                if (!response.loggedIn) {
+                    // Redirect to login page if not logged in
+                    window.location.href = '/login_page';
+                }
+            },
+            error: function() {
+                console.error('Failed to check login status');
+            }
+        });
+    }
+    
+    function loadRecentQuestions() {
+        $.ajax({
+            url: '/get-recent-questions',
+            method: 'GET',
+            success: function(response) {
+                if (response.questions && response.questions.length > 0) {
+                    // You could add a dropdown or suggestions with recent questions
+                    console.log('Recent questions loaded:', response.questions);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    // Redirect to login if unauthorized
+                    window.location.href = '/login_page';
+                } else {
+                    console.error('Failed to load recent questions');
+                }
+            }
+        });
+    }
+    
+    function sendMessage() {
+        const messageText = $('#messageInput').val().trim();
+        
+        if (messageText) {
+            // Add user message to both chat windows
+            addMessage('modelAChat', messageText, 'user');
+            addMessage('modelBChat', messageText, 'user');
+            
+            // Clear input
+            $('#messageInput').val('');
+            
+            // Show loading indicators
+            addLoadingIndicator('modelAChat');
+            addLoadingIndicator('modelBChat');
+            
+            // Call backend API to get model responses
+            $.ajax({
+                url: '/query-models',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ question: messageText }),
+                success: function(response) {
+                    // Remove loading indicators
+                    removeLoadingIndicator('modelAChat');
+                    removeLoadingIndicator('modelBChat');
+                    
+                    // Update model names
+                    $('.model-card:first .model-title').text(response.model_a.name);
+                    $('.model-card:last .model-title').text(response.model_b.name);
+                    
+                    // Add model responses with metrics
+                    addModelResponse('modelAChat', response.model_a.response, response.model_a.metrics);
+                    addModelResponse('modelBChat', response.model_b.response, response.model_b.metrics);
+                },
+                error: function(xhr) {
+                    // Remove loading indicators
+                    removeLoadingIndicator('modelAChat');
+                    removeLoadingIndicator('modelBChat');
+                    
+                    if (xhr.status === 401) {
+                        // Redirect to login if unauthorized
+                        window.location.href = '/login_page';
+                    } else {
+                        // Show error message
+                        addMessage('modelAChat', 'Error: Failed to get response.', 'bot');
+                        addMessage('modelBChat', 'Error: Failed to get response.', 'bot');
+                        console.error('API call failed:', xhr.responseText);
+                    }
+                }
+            });
+        }
+    }
+    
+    function addMessage(containerId, text, type) {
+        const messageClass = type === 'user' ? 'user-message' : 'bot-message';
+        let messageHtml = `<div class="message ${messageClass}">${text}`;
+        
+        // Add copy button for bot messages
+        if (type === 'bot') {
+            messageHtml += `<button class="copy-button" onclick="copyToClipboard(this.parentElement.textContent.trim())">
+                <i class="far fa-copy"></i>
+            </button>`;
+        }
+        
+        messageHtml += `</div>`;
+        
+        $(`#${containerId}`).append(messageHtml);
+        
+        // Scroll to bottom
+        const container = document.getElementById(containerId);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    function addModelResponse(containerId, text, metrics) {
+        // Create the response container
+        let responseHtml = `<div class="message bot-message">`;
+        
+        // Add the response text
+        responseHtml += `<div>${text}</div>`;
+        
+        // Add metrics if available
+        if (metrics && Object.keys(metrics).length > 0) {
+            responseHtml += `<div class="metrics-container" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                <h6 style="color: var(--accent-color);">Evaluation Metrics:</h6>
+                <ul style="margin-bottom: 0; padding-left: 20px;">`;
+            
+            // Add each metric
+            for (const [key, value] of Object.entries(metrics)) {
+                // Format the key as a readable label
+                const label = key.replace(/_/g, ' ')
+                               .replace(/\b\w/g, l => l.toUpperCase());
+                
+                // Format the value based on type
+                let formattedValue = value;
+                if (typeof value === 'number') {
+                    formattedValue = value.toFixed(2);
+                }
+                
+                responseHtml += `<li><strong>${label}:</strong> ${formattedValue}</li>`;
+            }
+            
+            responseHtml += `</ul></div>`;
+        }
+        
+        // Add copy button
+        responseHtml += `<button class="copy-button" onclick="copyToClipboard(this.parentElement.querySelector('div').textContent.trim())">
+            <i class="far fa-copy"></i>
+        </button>`;
+        
+        responseHtml += `</div>`;
+        
+        $(`#${containerId}`).append(responseHtml);
+        
+        // Scroll to bottom
+        const container = document.getElementById(containerId);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    function addLoadingIndicator(containerId) {
+        $(`#${containerId}`).append(`
+            <div class="loading-message" id="${containerId}Loading">
+                <div class="spinner"></div>
+                <div>Generating response...</div>
+            </div>
+        `);
+        
+        // Scroll to bottom
+        const container = document.getElementById(containerId);
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    function removeLoadingIndicator(containerId) {
+        $(`#${containerId}Loading`).remove();
+    }
+    
+    function showNotification(message) {
+        // Create a toast notification
+        const toast = $(`<div class="toast-notification">${message}</div>`)
+            .css({
+                'position': 'fixed',
+                'bottom': '20px',
+                'right': '20px',
+                'background-color': 'rgba(52, 152, 219, 0.9)',
+                'color': 'white',
+                'padding': '10px 20px',
+                'border-radius': '4px',
+                'z-index': '1000',
+                'opacity': '0',
+                'transition': 'opacity 0.3s ease'
+            })
+            .appendTo('body');
+        
+        // Show and then hide the toast
+        setTimeout(() => toast.css('opacity', '1'), 10);
+        setTimeout(() => {
+            toast.css('opacity', '0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+});
+
+// Function to copy text to clipboard
+function copyToClipboard(text) {
+    // Remove the "Copy" text that's part of the button
+    const cleanedText = text.replace('Copy', '').trim();
+    
+    navigator.clipboard.writeText(cleanedText).then(function() {
+        // Create a small toast notification
+        const toast = $(`<div>Copied to clipboard</div>`)
+            .css({
+                'position': 'fixed',
+                'bottom': '20px',
+                'right': '20px',
+                'background-color': 'rgba(52, 152, 219, 0.9)',
+                'color': 'white',
+                'padding': '8px 15px',
+                'border-radius': '4px',
+                'z-index': '1000',
+                'opacity': '0',
+                'transition': 'opacity 0.3s ease'
+            })
+            .appendTo('body');
+        
+        // Show and then hide the toast
+        setTimeout(() => toast.css('opacity', '1'), 10);
+        setTimeout(() => {
+            toast.css('opacity', '0');
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
     </script>
 </body>
 </html>
