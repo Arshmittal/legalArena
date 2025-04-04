@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tool Vendor Onboarding</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4caf50;
+            --danger-color: #f44336;
+            --bg-color: #f9fafb;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: var(--primary-color);
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 40px;
+    margin-right: 8px;
+}
+
+
+.highlight {
+    color: var(--border-color);
+    font-weight: 700;
+}
+.anchor{
+    text-decoration: none;
+}
+        .navbar-dark {
+            color: white;
+        }
+        .user-image {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .navbar-brand {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .navbar-toggler {
+            display: none;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .navbar-toggler-icon {
+            display: inline-block;
+            width: 1.5em;
+            height: 1.5em;
+            vertical-align: middle;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100%;
+        }
+
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-item {
+            margin-left: 1rem;
+            position: relative;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem;
+            transition: color 0.3s ease;
+            display: block;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .dropdown-toggle {
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-toggle::after {
+            content: '';
+            display: inline-block;
+            margin-left: 0.5em;
+            vertical-align: middle;
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            display: none;
+            min-width: 10rem;
+            padding: 0.5rem 0;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .dropdown-menu-end {
+            right: 0;
+            left: auto;
+        }
+
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            clear: both;
+            text-align: inherit;
+            white-space: nowrap;
+            background-color: transparent;
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-divider {
+            height: 0;
+            margin: 0.5rem 0;
+            overflow: hidden;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        .user-image {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .ms-auto {
+            margin-left: auto;
+        }
+
+        /* End of Navbar Styles */
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            
+            border-radius: 8px;
+            
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #444;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .curl-request {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .error {
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            margin-top: 0.2rem;
+        }
+
+        .success-message {
+            background-color: #e8f5e9;
+            color: var(--success-color);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 2rem;
+            text-align: center;
+            display: none;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1 1 300px;
+        }
+
+        .hint-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.3rem;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-toggler {
+                display: block;
+            }
+
+            .navbar-collapse {
+                position: absolute;
+                top: 100%;
+                right: 0;
+                left: 0;
+                background-color: var(--primary-color);
+                padding: 1rem;
+                display: none;
+                z-index: 1000;
+            }
+
+            .navbar-collapse.show {
+                display: block;
+            }
+
+            .navbar-nav {
+                flex-direction: column;
+            }
+
+            .nav-item {
+                margin: 0.5rem 0;
+            }
+
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 0;
+            }
+
+            .dropdown-item {
+                color: white;
+            }
+
+            .dropdown-item:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .dropdown-divider {
+                border-top-color: rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="anchor" href="/">
+                <div class="logo">
+                    Legal <span class="highlight">AI</span>Arena
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+        </div>
+    </nav>
+    
+    <div class="container">
+        <header>
+            <h1>API Tool Vendor Onboarding</h1>
+            <p class="subtitle">Register your API tool with our marketplace</p>
+        </header>
+
+        <form id="vendorForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="toolName">Tool Name*</label>
+                    <input type="text" id="toolName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="toolApiCalls">Number of API Calls*</label>
+                    <input type="number" id="toolApiCalls" name="apiCalls" placeholder="0" required>
+                    <p class="hint-text">Enter the number of API calls per month</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="toolCategory">Category*</label>
+                <select id="toolCategory" name="category" required>
+                    <option value="">Select a category</option>
+                    <!-- Categories will be loaded dynamically -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="toolEndpoint">API Endpoint URL*</label>
+                <input type="url" id="toolEndpoint" name="endpoint" placeholder="https://api.yourtool.com/v1/" required>
+            </div>
+
+            <div class="form-group">
+                <label for="curlRequest">Sample cURL Request</label>
+                <textarea id="curlRequest" name="curlRequest" placeholder="curl -X POST https://api.yourtool.com/v1/endpoint -H 'Content-Type: application/json' -d '{\"key\": \"value\"}'"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="toolDescription">Tool Description*</label>
+                <textarea id="toolDescription" name="description" placeholder="Describe what your tool does and its key features..." required></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="contactEmail">Contact Email*</label>
+                    <input type="email" id="contactEmail" name="contactEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="documentationUrl">Documentation URL</label>
+                    <input type="url" id="documentationUrl" name="documentationUrl" placeholder="https://docs.yourtool.com">
+                </div>
+            </div>
+
+            <button type="submit">Submit Tool</button>
+        </form>
+
+        <div id="successMessage" class="success-message">
+            <h3>Tool Submitted Successfully!</h3>
+            <p>Our team will review your submission and get back to you soon.</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const vendorForm = document.getElementById('vendorForm');
+        const categorySelect = document.getElementById('toolCategory');
+        const successMessage = document.getElementById('successMessage');
+
+        // Load categories when page loads
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // In a real application, this would be fetched from the backend
+                const categories = [
+                    "AI/ML", "Data Processing", "Communication", 
+                    "Analytics", "Payment Processing", "E-commerce",
+                    "Authentication", "Mapping/Location", "Storage"
+                ];
+                
+                // Populate category dropdown
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        });
+
+        // Form submission
+        vendorForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.remove());
+            
+            // Basic validation
+            let isValid = true;
+            
+            // Validate required fields
+            vendorForm.querySelectorAll('[required]').forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    showError(field, 'This field is required');
+                }
+            });
+            
+            // Validate price is a number
+            const priceField = document.getElementById('toolPrice');
+            if (priceField.value !== 'Free' && isNaN(parseFloat(priceField.value))) {
+                isValid = false;
+                showError(priceField, 'Price must be a number or "Free"');
+            }
+            
+            if (!isValid) return;
+            
+            // Collect form data
+            const formData = {
+                name: document.getElementById('toolName').value.trim(),
+                price: document.getElementById('toolPrice').value.trim(),
+                category: document.getElementById('toolCategory').value,
+                endpoint: document.getElementById('toolEndpoint').value.trim(),
+                curlRequest: document.getElementById('curlRequest').value.trim(),
+                description: document.getElementById('toolDescription').value.trim(),
+                contactEmail: document.getElementById('contactEmail').value.trim(),
+                documentationUrl: document.getElementById('documentationUrl').value.trim() || null
+            };
+            
+            try {
+                // In a real application, this would send data to your backend
+                // For demo, we'll simulate success
+                console.log('Submitting tool data:', formData);
+                
+                // Simulate API call
+                // Replace this with actual API call in production
+                 const response = await fetch('http://localhost:5000/api/submit-tool', {
+                    method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(formData)
+                 });
+                 const data = await response.json();
+                
+                 if (!response.ok) throw new Error(data.message || 'Submission failed');
+                
+                // Show success message
+                vendorForm.style.display = 'none';
+                successMessage.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                alert(`Error: ${error.message || 'Failed to submit. Please try again.'}`);
+            }
+        });
+        
+        // Helper function to show validation errors
+        function showError(field, message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+            field.style.borderColor = 'var(--danger-color)';
+        }
+    </script>
+</body>
+</html>

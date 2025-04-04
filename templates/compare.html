@@ -11,18 +11,14 @@
     <style>
         /* Color Palette */
         :root {
-            --primary-color: #2C3E50;       /* Deep blue-gray for main elements */
-            --secondary-color: #34495E;     /* Slightly lighter blue-gray */
-            --accent-color: #3498DB;        /* Bright, professional blue */
-            --background-color: #1E2130;    /* Dark background color */
-            --card-background: #2C3240;     /* Slightly lighter card background */
-            --text-color: #E9ECEF;          /* Light text color */
-            --light-text: #FFFFFF;          /* White text for contrast */
-            --gray-text: #ADB5BD;           /* Soft gray for secondary text */
-            --button-color: #3498DB;        /* Button color */
-            --border-color: #4B5563;        /* Border color */
-            --highlight-color: #F39C12;     /* Yellow highlight */
-            --bad-color: #E74C3C;           /* Red for "both bad" option */
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4caf50;
+            --danger-color: #f44336;
+            --bg-color: #f9fafb;
+            --text-color: #333;
+            --border-color: #ddd;
+            --accent-color: #3498DB; 
         }
 
         * {
@@ -43,8 +39,32 @@
         .navbar {
             background-color: var(--primary-color);
         }
+        .logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 40px;
+    margin-right: 8px;
+}
+
+
+.highlight {
+    color: var(--border-color);
+    font-weight: 700;
+}
+.anchor{
+    text-decoration: none;
+}
         .container{
-            margin-top: 20px;
+            margin-top: 5px;
+        }
+        .legals{
+            margin-top: 40px;
         }
         .user-image {
             width: 32px;
@@ -176,7 +196,11 @@
     <!-- Navigation Bar (Copied from tools.html) -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">Legal Arena</a>
+            <a class="anchor" href="/">
+            <div class="logo">
+                Legal <span class="highlight">AI</span>Arena
+            </div>
+        </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -206,7 +230,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container legals">
         <h1 class="title">Legal AI Tools Comparison</h1>
         
         <div class="tool-selection">

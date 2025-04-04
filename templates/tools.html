@@ -11,18 +11,14 @@
     <style>
         /* Color Palette */
         :root {
-            --primary-color: #2C3E50;       /* Deep blue-gray for main elements */
-            --secondary-color: #34495E;     /* Slightly lighter blue-gray */
-            --accent-color: #3498DB;        /* Bright, professional blue */
-            --background-color: #1E2130;    /* Dark background color */
-            --card-background: #2C3240;     /* Slightly lighter card background */
-            --text-color: #E9ECEF;          /* Light text color */
-            --light-text: #FFFFFF;          /* White text for contrast */
-            --gray-text: #ADB5BD;           /* Soft gray for secondary text */
-            --button-color: #3498DB;        /* Button color */
-            --border-color: #4B5563;        /* Border color */
-            --highlight-color: #F39C12;     /* Yellow highlight */
-            --bad-color: #E74C3C;           /* Red for "both bad" option */
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4caf50;
+            --danger-color: #f44336;
+            --bg-color: #f9fafb;
+            --text-color: #333;
+            --border-color: #ddd;
+            --accent-color: #3498DB; 
         }
 
         body {
@@ -35,7 +31,26 @@
         .navbar {
             background-color: var(--primary-color);
         }
-        
+        .logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 40px;
+    margin-right: 8px;
+}
+
+.highlight {
+    color: var(--border-color);
+    font-weight: 700;
+}
+.anchor{
+    text-decoration: none;
+}
         .comparison-container {
             width: 100%;
             margin: 10px auto;
@@ -109,9 +124,8 @@
             height: 450px;
             margin-bottom: 15px;
             padding: 10px;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
+           
+          
         }
         
         .message {
@@ -120,7 +134,7 @@
         }
         
         .user-message {
-            background-color: var(--secondary-color);
+            background-color: var(--bg-color);
             color: var(--light-text);
             padding: 10px 15px;
             border-radius: 15px 15px 0 15px;
@@ -129,7 +143,7 @@
         }
         
         .bot-message {
-            background-color: var(--primary-color);
+            background-color: var(--bg-color);
             color: var(--light-text);
             padding: 10px 15px;
             border-radius: 15px 15px 15px 0;
@@ -154,13 +168,13 @@
             display: flex;
             align-items: center;
             padding: 10px;
-            background-color: rgba(0, 0, 0, 0.2);
+           
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
         
         .message-input {
-            background-color: var(--secondary-color);
+           
             border: 1px solid var(--border-color);
             color: var(--light-text);
             border-radius: 20px;
@@ -334,7 +348,11 @@
     <!-- Navigation Bar -->
      <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">LegalArena</a>
+            <a class="anchor" href="/">
+            <div class="logo">
+                Legal <span class="highlight">AI</span>Arena
+            </div>
+        </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
