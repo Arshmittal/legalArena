@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Performance Leaderboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+body {
+    background-color: #0e1117; /* Darker background matching the image */
+    color: #e6e6e6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.leaderboard-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.card {
+    background-color: #171b26; /* Darker card background */
+    border: 1px solid #242c3d;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    background-color: #1e2538; /* Darker header background */
+    color: #e6e6e6;
+    font-weight: 600;
+    border-bottom: 1px solid #363f54;
+}
+
+.table {
+    color: #e6e6e6;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table thead th {
+    background-color: #1e2538; /* Matching the image header */
+    color: #e6e6e6;
+    border-color: #363f54;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+    background-color: #242c3d;
+}
+
+.table td, .table th {
+    border-color: #363f54;
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+.model-name {
+    color: #4e92e6; /* Brighter blue for model links */
+    font-weight: 500;
+}
+
+.elo-rating {
+    font-weight: 600;
+    color: #ffd700; /* Keep gold for ELO ratings */
+}
+
+.stats-badge {
+    background-color: #2c5282;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin-right: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.win-rate-bar {
+    height: 8px;
+    background-color: #242c3d;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.win-rate-progress {
+    height: 100%;
+    background-color: #48bb78;
+    border-radius: 4px;
+}
+
+.rank-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.rank-1 {
+    background-color: #ffd700;
+    color: #171b26;
+}
+
+.rank-2 {
+    background-color: #c0c0c0;
+    color: #171b26;
+}
+
+.rank-change-up {
+    color: #38a169; /* Green color for rank improvements */
+}
+
+.rank-change-down {
+    color: #e53e3e; /* Red color for rank drops, matching the image */
+}
+
+.last-updated {
+    font-size: 0.875rem;
+    color: #a0aec0;
+    text-align: right;
+    margin-top: 0.5rem;
+}
+
+#loading-indicator {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+#error-message {
+    display: none;
+    color: #fc8181;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+.comparison-details {
+    background-color: #1e2538;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.comparison-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #e6e6e6;
+}
+
+.model-stat-card {
+    background-color: #171b26;
+    border: 1px solid #363f54;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.model-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.model-stat-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4e92e6; /* Matching model-name color */
+}
+
+.model-stat-elo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffd700;
+}
+
+.model-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.model-stat-item {
+    text-align: center;
+    padding: 0.75rem;
+    background-color: #242c3d;
+    border-radius: 6px;
+}
+
+.model-stat-label {
+    font-size: 0.8rem;
+    color: #a0aec0;
+    margin-bottom: 0.25rem;
+}
+
+.model-stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #e6e6e6;
+}
+
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+    </style>
+</head>
+<body>
+    <div class="leaderboard-container">
+        <h1 class="mb-4">Tool Performance Leaderboard</h1>
+        
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Model Rankings</h5>
+                <button class="btn btn-sm btn-outline-light" id="refreshBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+            <div id="loading-indicator">
+                <div class="spinner-border text-light" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading model data...</p>
+            </div>
+            <div id="error-message" class="alert alert-danger">
+                Error loading model data. Please try again later.
+            </div>
+            <div class="card-body p-0" id="models-table-container">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%">#</th>
+                                <th style="width: 8%">Rank</th>
+                                <th style="width: 22%">Model</th>
+                                <th style="width: 15%">ELO Rating</th>
+                                <th style="width: 20%">Votes</th>
+                                <th style="width: 15%">Win%</th>
+                            
+                            </tr>
+                        </thead>
+                        <tbody id="models-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-end">
+                    <div class="last-updated" id="last-updated">
+                        Loading update time...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="comparison-details">
+            <h2 class="comparison-title">Detailed Model Performance</h2>
+            <div class="row" id="model-stats-container"></div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variable to store model data
+        let modelData = [];
+        
+        // Function to format date and time
+        function formatDateTime(date) {
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short'
+            };
+            return new Date(date).toLocaleDateString(undefined, options);
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : 'primary'} border-0`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toastEl);
+            
+            const toast = new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: 3000
+            });
+            
+            toast.show();
+            
+            // Remove from DOM after hiding
+            toastEl.addEventListener('hidden.bs.toast', function () {
+                toastContainer.removeChild(toastEl);
+            });
+        }
+        
+        // Function to fetch model ratings
+        function fetchModelRatings() {
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('models-table-container').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+            
+            fetch('/get-model-ratings')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    modelData = data.ratings || [];
+                    
+                    // Sort by ELO rating (descending)
+                    modelData.sort((a, b) => b.elo_rating - a.elo_rating);
+                    
+                    // Update the last updated time
+                    document.getElementById('last-updated').textContent = 
+                        `Last updated: ${formatDateTime(new Date())}`;
+                    
+                    // Render the table and detailed stats
+                    renderModelsTable();
+                    renderDetailedStats();
+                    
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    document.getElementById('models-table-container').style.display = 'block';
+                    
+                    showToast('Model data updated successfully');
+                })
+                .catch(error => {
+                    console.error('Error fetching model ratings:', error);
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    document.getElementById('error-message').style.display = 'block';
+                    document.getElementById('error-message').textContent = 
+                        `Error loading model data: ${error.message}. Please try again later.`;
+                    
+                    showToast('Failed to load model data. Please try again.', 'error');
+                });
+        }
+        
+        // Function to render the models table
+        function renderModelsTable() {
+            const tableBody = document.getElementById('models-table-body');
+            tableBody.innerHTML = '';
+            
+            modelData.forEach((model, index) => {
+                const winRate = model.total_matches > 0 ? 
+                    ((model.wins / model.total_matches) * 100).toFixed(1) : '0.0';
+                
+                const row = document.createElement('tr');
+                
+                let rankClass = 'rank-other';
+                if (index === 0) rankClass = 'rank-1';
+                if (index === 1) rankClass = 'rank-2';
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>
+                        <div class="rank-badge ${rankClass}">${index + 1}</div>
+                    </td>
+                    <td>
+                        <span class="model-name">${model.model_name}</span>
+                    </td>
+                    <td>
+                        <span class="elo-rating">${model.elo_rating.toFixed(1)}</span>
+                    </td>
+                    <td>
+                        <div>
+                            <span class="stats-badge">${model.wins}</span>
+                   
+                        </div>
+                    </td>
+                    <td>
+                        <div>${winRate}%</div>
+                        <div class="win-rate-bar">
+                            <div class="win-rate-progress" style="width: ${winRate}%"></div>
+                        </div>
+                    </td>
+                 
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            if (modelData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="7" class="text-center py-4">
+                        No model data available. Please add models to see rankings.
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+        
+        // Function to render detailed model statistics
+        function renderDetailedStats() {
+            const statsContainer = document.getElementById('model-stats-container');
+            statsContainer.innerHTML = '';
+            
+            modelData.forEach(model => {
+                const winRate = model.total_matches > 0 ? 
+                    ((model.wins / model.total_matches) * 100).toFixed(1) : '0.0';
+                
+                const modelCard = document.createElement('div');
+                modelCard.className = 'col-md-6 mb-4';
+                
+                modelCard.innerHTML = `
+                    <div class="model-stat-card">
+                        <div class="model-stat-header">
+                            <div class="model-stat-name">${model.model_name}</div>
+                            <div class="model-stat-elo">${model.elo_rating.toFixed(1)}</div>
+                        </div>
+                        <div class="model-stats-grid">
+                            <div class="model-stat-item">
+                                <div class="model-stat-label">Wins</div>
+                                <div class="model-stat-value">${model.wins}</div>
+                            </div>
+                            <div class="model-stat-item">
+                                <div class="model-stat-label">Losses</div>
+                                <div class="model-stat-value">${model.losses}</div>
+                            </div>
+                            <div class="model-stat-item">
+                                <div class="model-stat-label">Ties</div>
+                                <div class="model-stat-value">${model.ties}</div>
+                            </div>
+                            <div class="model-stat-item">
+                                <div class="model-stat-label">Win Rate</div>
+                                <div class="model-stat-value">${winRate}%</div>
+                            </div>
+                            <div class="model-stat-item">
+                                <div class="model-stat-label">Total Matches</div>
+                                <div class="model-stat-value">${model.total_matches}</div>
+                            </div>
+                            <div class="model-stat-item">
+                                <div class="model-stat-label">Rank</div>
+                                <div class="model-stat-value">#${modelData.indexOf(model) + 1}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                statsContainer.appendChild(modelCard);
+            });
+            
+            if (modelData.length === 0) {
+                statsContainer.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            No detailed statistics available. Please add models to see performance data.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch initial data
+            fetchModelRatings();
+            
+            // Set up refresh button
+            document.getElementById('refreshBtn').addEventListener('click', fetchModelRatings);
+            
+            // Set up periodic refresh (every 60 seconds)
+            setInterval(fetchModelRatings, 60000);
+        });
+
+        // Add the voting system from the existing code
+        let hasVoted = false;
+        let userVote = null;
+        let currentQuestion = null;
+        let voteButtons = {};
+
+        function getVoteCounts() {
+            if (!currentQuestion) {
+                console.log('No current question, not fetching vote counts');
+                return Promise.resolve(null);
+            }
+            
+            console.log(`Fetching vote counts for: ${currentQuestion}`);
+            
+            return fetch(`/question-votes/${encodeURIComponent(currentQuestion)}`, {
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Error fetching vote counts: ${response.status} - ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Vote counts received:', data);
+                    if (data.user_vote) {
+                        updateVoteCounts(data.vote_counts, data.user_vote);
+                    } else {
+                        updateVoteCounts(data.vote_counts);
+                    }
+                    return data;
+                })
+                .catch(error => {
+                    console.error('Error fetching vote counts:', error);
+                    return null;
+                });
+        }
+
+        function updateVoteCounts(voteCounts, userVoteValue = null) {
+            // Implementation would be added here based on your UI
+            console.log('Updating vote counts:', voteCounts, 'User vote:', userVoteValue);
+        }
+
+        // Set up message sending hooks
+        document.addEventListener('DOMContentLoaded', function() {
+            // Modify the existing sendMessage function to handle votes
+            const originalSendMessage = window.sendMessage;
+            
+            if (originalSendMessage) {
+                console.log('Found existing sendMessage function, will extend it');
+                
+                window.sendMessage = function(message) {
+                    console.log('sendMessage called with:', message);
+                    
+                    // Reset voting state for new question
+                    hasVoted = false;
+                    userVote = null;
+                    currentQuestion = message;
+                    
+                    // Call the original function
+                    originalSendMessage(message);
+                    
+                    // After sending message, check for existing votes after a delay
+                    setTimeout(getVoteCounts, 2000);
+                };
+            } else {
+                console.warn('Original sendMessage function not found.');
+            }
+        });
+    </script>
+</body>
+</html>
