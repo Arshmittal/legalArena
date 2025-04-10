@@ -53,16 +53,15 @@ dummy_user = {
     "last_login": datetime.utcnow()
 }
 
-CORS(app,
-     supports_credentials=True,
-     origins=["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:3000"])
+CORS(app, supports_credentials=True)
 
 
 app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = True  # ✅ only for local dev
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'   # Same domain => 'Lax' is okay
+app.config['SESSION_COOKIE_SECURE'] = True      # Ensure HTTPS
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
 app.config['SESSION_PERMANENT'] = True
+
 
 
 app.logger.setLevel(logging.INFO)
