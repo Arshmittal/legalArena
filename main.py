@@ -1,3 +1,5 @@
+from email.quoprimime import unquote
+from http.client import HTTPException
 import os
 import logging
 import pandas as pd
@@ -5,10 +7,12 @@ from flask import Flask, json, jsonify, redirect, url_for, session, request, ren
 from flask_session import Session
 from flask import Flask, request, jsonify, render_template
 from authlib.integrations.flask_client import OAuth
+from pydantic import BaseModel, Field
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from datetime import datetime, time, timedelta
 import requests
+from typing import Optional
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -30,7 +34,13 @@ class MongoJSONEncoder(json.JSONEncoder):
         if isinstance(obj, ObjectId):
             return str(obj)
         return super().default(obj)
-    
+
+
+# Define the feedback model
+class FeedbackModel(BaseModel):
+    name: str
+    feedback: str
+    timestamp: Optional[datetime] = Field(default_factory=datetime.now)   
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 bcrypt = Bcrypt(app)
@@ -93,7 +103,10 @@ try:
     llama_responses_collection = db['llama_responses']
     deepseek_responses_collection = db['deepseek_responses']
     votes_collection = db['tool_votes']
+    votes_collection = db['model_votes']
+    elo_ratings_collection = db['model_elo_ratings']
     tools_collection = db['tools']
+    feedback_collection = db['feedback']
 except Exception as e:
     logger.critical(f"Failed to connect to MongoDB: {e}")
     raise
@@ -249,22 +262,10 @@ def parse_evaluation_metrics(evaluation):
 
 
 def get_previous_model_response(question, model_type):
-    """Get the previous response for this question and model if it exists"""
-    try:
-        # Select the appropriate collection based on model type
-        collection = llama_responses_collection if model_type == "llama" else deepseek_responses_collection
-        
-        prev_response = collection.find_one({"question": question})
-        
-        if prev_response:
-            logger.debug(f"Found previous response for {model_type} model and question: {question[:30]}...")
-            return prev_response.get("response")
-        logger.debug(f"No previous response found for {model_type} model and question: {question[:30]}...")
-        return None
-    except Exception as e:
-        logger.error(f"Error retrieving previous model response: {e}")
-        return None
-
+    """Get previous response for a model if it exists"""
+    collection = llama_responses_collection if model_type == "llama" else deepseek_responses_collection
+    result = collection.find_one({"question": question})
+    return result.get("response") if result else None
 
 @app.route('/')
 def home():
@@ -672,21 +673,39 @@ def query_models():
         logger.info(f"DeepSeek response saved: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
     except Exception as e:
         logger.error(f"Error saving DeepSeek response to MongoDB: {e}")
+    
+    # Get existing vote counts for this question
+    vote_counts = {
+        "a": votes_collection.count_documents({"question": question, "vote_type": "a"}),
+        "b": votes_collection.count_documents({"question": question, "vote_type": "b"}),
+        "tie": votes_collection.count_documents({"question": question, "vote_type": "tie"}),
+        "bad": votes_collection.count_documents({"question": question, "vote_type": "bad"})
+    }
+    
+    # Check if user has already voted
+    user_id = session["user"].get("id") or user_email
+    user_vote = votes_collection.find_one({
+        "question": question,
+        "user_id": user_id
+    })
    
     return jsonify({
         "question": question,
         "model_a": {
-            "name": "Meta Llama 3.3 70B",
+            "name": "eBrevia",
             "response": llama_response,
             "metrics": llama_metrics
         },
         "model_b": {
-            "name": "DeepSeek R1 Distill Llama 70B",
+            "name": "Equally.ai",
             "response": deepseek_response,
             "metrics": deepseek_metrics
+        },
+        "votes": {
+            "counts": vote_counts,
+            "user_vote": user_vote["vote_type"] if user_vote else None
         }
     })
-
 
 @app.route("/get-recent-questions", methods=["GET"])
 def get_recent_questions():
@@ -813,113 +832,6 @@ def vote_for_tool():
         logger.error(f"Error recording vote: {e}")
         return jsonify({"error": "Failed to record vote", "success": False}), 500
 
-# Add these two routes to your Flask app
-
-@app.route("/get-user-vote", methods=["POST"])
-def get_user_vote():
-    if "user" not in session:
-        return jsonify({"error": "User not logged in"}), 401
-   
-    data = request.json
-    comparison_id = data.get("comparisonId")
-    user_email = session["user"]["email"]
-   
-    if not comparison_id:
-        return jsonify({"error": "Comparison ID is required", "voted": False}), 400
-   
-    try:
-        # Check all possible tool IDs for this comparison
-        tool_ids = [
-            f"{comparison_id}_model_a",
-            f"{comparison_id}_model_b",
-            f"{comparison_id}_tie",
-            f"{comparison_id}_both_bad"
-        ]
-        
-        for tool_id in tool_ids:
-            # Check if user has voted for this tool
-            vote_doc = votes_collection.find_one({
-                "tool_id": tool_id,
-                "voters": user_email
-            })
-            
-            if vote_doc:
-                logger.info(f"User {user_email} has voted for {tool_id} in comparison {comparison_id}")
-                return jsonify({
-                    "voted": True,
-                    "toolId": tool_id
-                })
-        
-        # User hasn't voted for this comparison
-        return jsonify({
-            "voted": False,
-            "toolId": None
-        })
-    except Exception as e:
-        logger.error(f"Error checking user vote: {e}")
-        return jsonify({"error": "Failed to check vote", "voted": False}), 500
-
-@app.route("/change-vote", methods=["POST"])
-def change_vote():
-    if "user" not in session:
-        return jsonify({"error": "User not logged in", "success": False}), 401
-   
-    data = request.json
-    comparison_id = data.get("comparisonId")
-    previous_tool_id = data.get("previousToolId")
-    new_tool_id = data.get("newToolId")
-    user_email = session["user"]["email"]
-   
-    if not comparison_id or not new_tool_id:
-        return jsonify({"error": "Comparison ID and new tool ID are required", "success": False}), 400
-   
-    try:
-        # If user had a previous vote, remove it
-        if previous_tool_id:
-            votes_collection.update_one(
-                {"tool_id": previous_tool_id},
-                {
-                    "$inc": {"votes": -1},
-                    "$pull": {"voters": user_email}
-                }
-            )
-            logger.info(f"Removed previous vote from {user_email} for {previous_tool_id}")
-        
-        # Add new vote
-        votes_collection.update_one(
-            {"tool_id": new_tool_id},
-            {
-                "$inc": {"votes": 1},
-                "$push": {"voters": user_email}
-            },
-            upsert=True
-        )
-        logger.info(f"Added new vote from {user_email} for {new_tool_id}")
-        
-        # Get updated vote counts for all tools in this comparison
-        tool_ids = [
-            f"{comparison_id}_model_a",
-            f"{comparison_id}_model_b",
-            f"{comparison_id}_tie",
-            f"{comparison_id}_both_bad"
-        ]
-        
-        votes = {}
-        for tool_id in tool_ids:
-            vote_doc = votes_collection.find_one({"tool_id": tool_id})
-            if vote_doc:
-                votes[tool_id] = vote_doc["votes"]
-            else:
-                votes[tool_id] = 0
-        
-        return jsonify({
-            "success": True,
-            "votes": votes
-        })
-    except Exception as e:
-        logger.error(f"Error changing vote: {e}")
-        return jsonify({"error": "Failed to change vote", "success": False}), 500
-
 TOOL_CATEGORIES = [
     "AI/ML", "Data Processing", "Communication", 
     "Analytics", "Payment Processing", "E-commerce",
@@ -976,6 +888,308 @@ def submit_tool():
 def get_categories():
     return jsonify(TOOL_CATEGORIES)
 
+@app.route("/api/feedback", methods=["POST"])
+def create_feedback():
+    """
+    Store feedback in MongoDB
+    """
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data or "name" not in data or "feedback" not in data:
+            return jsonify({
+                "success": False,
+                "message": "Name and feedback are required"
+            }), 400
+            
+        # Create feedback document
+        feedback_doc = {
+            "name": data["name"],
+            "feedback": data["feedback"],
+            "timestamp": datetime.now()
+        }
+        
+        # Insert the feedback into MongoDB
+        result = feedback_collection.insert_one(feedback_doc)
+        
+        # Return success response with the inserted ID
+        return jsonify({
+            "success": True,
+            "message": "Feedback submitted successfully",
+            "feedback_id": str(result.inserted_id)
+        }), 201
+    except Exception as e:
+        # Log the error (in a production environment, use a proper logger)
+        print(f"Error storing feedback: {e}")
+        return jsonify({
+            "success": False,
+            "message": "Failed to store feedback. Please try again later."
+        }), 500
+
+def initialize_elo_ratings():
+    """Initialize ELO ratings for models if they don't exist"""
+    models = ["eBrevia", "Equally.ai"]
+    default_elo = 1500  # Standard starting ELO
+    
+    for model in models:
+        existing = elo_ratings_collection.find_one({"model_name": model})
+        if not existing:
+            elo_ratings_collection.insert_one({
+                "model_name": model,
+                "elo_rating": default_elo,
+                "wins": 0,
+                "losses": 0,
+                "ties": 0,
+                "total_matches": 0,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            })
+            logger.info(f"Initialized ELO rating for {model}")
+
+# Call this during application startup
+initialize_elo_ratings()
+
+# Helper function to calculate new ELO ratings
+def calculate_elo(rating_a, rating_b, outcome_a):
+    """
+    Calculate new ELO ratings based on match outcome
+    
+    Parameters:
+    - rating_a: Current ELO rating of model A
+    - rating_b: Current ELO rating of model B
+    - outcome_a: Result for model A (1 for win, 0.5 for tie, 0 for loss)
+    
+    Returns:
+    - Tuple of (new_rating_a, new_rating_b)
+    """
+    # K-factor determines how much ratings change after each match
+    k_factor = 32
+    
+    # Calculate expected outcome using ELO formula
+    expected_a = 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
+    expected_b = 1 - expected_a
+    
+    # Calculate new ratings
+    new_rating_a = rating_a + k_factor * (outcome_a - expected_a)
+    new_rating_b = rating_b + k_factor * ((1 - outcome_a) - expected_b)
+    
+    return new_rating_a, new_rating_b
+@app.route('/leaderboard')
+def leaderboard():
+    """Model leaderboard page route"""
+    # Check if user is logged in - this is used to determine if nav buttons should be disabled
+    user = session.get('user', None)
+    return render_template('leaderboard.html', user=user)
+@app.route("/cast-vote", methods=["POST"])
+def cast_vote():
+    """Endpoint to cast a vote between models and update ELO ratings"""
+    if "user" not in session:
+        return jsonify({"error": "User not logged in"}), 401
+    
+    # Log that the endpoint was hit
+    logger.info("Cast vote endpoint hit")
+    
+    data = request.json
+    if not data:
+        logger.error("No JSON data received in request")
+        return jsonify({"error": "No data received"}), 400
+        
+    question = data.get("question")
+    vote_type = data.get("vote_type")
+    
+    logger.info(f"Vote request received - question: {question}, vote_type: {vote_type}")
+    
+    if not question or not vote_type:
+        return jsonify({"error": "Question and vote type are required"}), 400
+    
+    if vote_type not in ["a", "b", "tie", "bad"]:
+        return jsonify({"error": "Invalid vote type"}), 400
+    
+    user_email = session["user"]["email"]
+    user_id = session["user"].get("id") or user_email
+    
+    # Check if user has already voted on this question
+    existing_vote = votes_collection.find_one({
+        "question": question,
+        "user_id": user_id
+    })
+    
+    if existing_vote:
+        return jsonify({
+            "error": "You have already voted on this question",
+            "previous_vote": existing_vote["vote_type"]
+        }), 409
+    
+    # Get current ELO ratings
+    model_a_data = elo_ratings_collection.find_one({"model_name": "eBrevia"})
+    model_b_data = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
+    
+    if not model_a_data or not model_b_data:
+        initialize_elo_ratings()
+        model_a_data = elo_ratings_collection.find_one({"model_name": "eBrevia"})
+        model_b_data = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
+    
+    rating_a = model_a_data["elo_rating"]
+    rating_b = model_b_data["elo_rating"]
+    
+    # Process vote and update ELO ratings
+    timestamp = datetime.utcnow()
+    
+    # Create vote record
+    vote_doc = {
+        "question": question,
+        "user_id": user_id,
+        "user_email": user_email,
+        "vote_type": vote_type,
+        "created_at": timestamp
+    }
+    
+    # Update model stats based on vote type
+    if vote_type != "bad":  # Only update ELO for non-"bad" votes
+        wins_a = model_a_data["wins"]
+        losses_a = model_a_data["losses"]
+        ties_a = model_a_data["ties"]
+        total_a = model_a_data["total_matches"]
+        
+        wins_b = model_b_data["wins"]
+        losses_b = model_b_data["losses"]
+        ties_b = model_b_data["ties"]
+        total_b = model_b_data["total_matches"]
+        
+        if vote_type == "a":
+            # Model A wins, B loses
+            outcome_a = 1.0
+            new_rating_a, new_rating_b = calculate_elo(rating_a, rating_b, outcome_a)
+            wins_a += 1
+            losses_b += 1
+        elif vote_type == "b":
+            # Model B wins, A loses
+            outcome_a = 0.0
+            new_rating_a, new_rating_b = calculate_elo(rating_a, rating_b, outcome_a)
+            losses_a += 1
+            wins_b += 1
+        elif vote_type == "tie":
+            # Tie
+            outcome_a = 0.5
+            new_rating_a, new_rating_b = calculate_elo(rating_a, rating_b, outcome_a)
+            ties_a += 1
+            ties_b += 1
+        
+        # Update ELO ratings in database
+        elo_ratings_collection.update_one(
+            {"model_name": "eBrevia"},
+            {"$set": {
+                "elo_rating": new_rating_a,
+                "wins": wins_a,
+                "losses": losses_a,
+                "ties": ties_a,
+                "total_matches": total_a + 1,
+                "updated_at": timestamp
+            }}
+        )
+        
+        elo_ratings_collection.update_one(
+            {"model_name": "Equally.ai"},
+            {"$set": {
+                "elo_rating": new_rating_b,
+                "wins": wins_b,
+                "losses": losses_b,
+                "ties": ties_b,
+                "total_matches": total_b + 1,
+                "updated_at": timestamp
+            }}
+        )
+    
+    # Save the vote
+    result = votes_collection.insert_one(vote_doc)
+    logger.info(f"Vote saved with ID: {result.inserted_id}")
+    
+    # Get current vote counts for this question
+    vote_counts = {
+        "a": votes_collection.count_documents({"question": question, "vote_type": "a"}),
+        "b": votes_collection.count_documents({"question": question, "vote_type": "b"}),
+        "tie": votes_collection.count_documents({"question": question, "vote_type": "tie"}),
+        "bad": votes_collection.count_documents({"question": question, "vote_type": "bad"})
+    }
+    
+    # Get updated ratings
+    model_a_updated = elo_ratings_collection.find_one({"model_name": "eBrevia"})
+    model_b_updated = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
+    
+    logger.info(f"Vote successful - returning vote counts: {vote_counts}")
+    
+    return jsonify({
+        "success": True,
+        "vote_recorded": vote_type,
+        "vote_counts": vote_counts,
+        "model_ratings": {
+            "eBrevia": {
+                "rating": model_a_updated["elo_rating"],
+                "wins": model_a_updated["wins"],
+                "losses": model_a_updated["losses"],
+                "ties": model_a_updated["ties"]
+            },
+            "Equally.ai": {
+                "rating": model_b_updated["elo_rating"],
+                "wins": model_b_updated["wins"],
+                "losses": model_b_updated["losses"],
+                "ties": model_b_updated["ties"]
+            }
+        }
+    })
+@app.route("/get-model-ratings", methods=["GET"])
+def get_model_ratings():
+    """Endpoint to get current ELO ratings for all models"""
+    if "user" not in session:
+        return jsonify({"error": "User not logged in"}), 401
+    
+    # Get ratings from database
+    ratings = list(elo_ratings_collection.find({}, {
+        "_id": 0,
+        "model_name": 1,
+        "elo_rating": 1,
+        "wins": 1,
+        "losses": 1,
+        "ties": 1,
+        "total_matches": 1
+    }))
+    
+    return jsonify({
+        "ratings": ratings
+    })
+
+@app.route("/question-votes/<path:question>", methods=["GET"])
+def get_question_votes(question):
+    """Get votes for a specific question"""
+    if "user" not in session:
+        return jsonify({"error": "User not logged in"}), 401
+    
+    # URL decode the question parameter
+    question = unquote(question)
+    
+    # Get vote counts
+    vote_counts = {
+        "a": votes_collection.count_documents({"question": question, "vote_type": "a"}),
+        "b": votes_collection.count_documents({"question": question, "vote_type": "b"}),
+        "tie": votes_collection.count_documents({"question": question, "vote_type": "tie"}),
+        "bad": votes_collection.count_documents({"question": question, "vote_type": "bad"})
+    }
+    
+    # Check if current user has voted
+    user_id = session["user"].get("id") or session["user"]["email"]
+    user_vote = votes_collection.find_one({
+        "question": question,
+        "user_id": user_id
+    })
+    
+    return jsonify({
+        "question": question,
+        "vote_counts": vote_counts,
+        "user_vote": user_vote["vote_type"] if user_vote else None,
+        "total_votes": sum(vote_counts.values())
+    })
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True)

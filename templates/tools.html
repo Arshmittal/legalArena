@@ -400,7 +400,7 @@
                                     <div class="model-icon">
                                         <i class="fas fa-robot"></i>
                                     </div>
-                                    <h4 class="model-title">Model A</h4>
+                                    <h4 class="model-title">Tool A</h4>
                                 </div>
                                 <div class="chat-container" id="modelAChat">
                                     <!-- Messages will be dynamically added here -->
@@ -416,7 +416,7 @@
                                     <div class="model-icon">
                                         <i class="fas fa-robot"></i>
                                     </div>
-                                    <h4 class="model-title">Model B</h4>
+                                    <h4 class="model-title">Tool B</h4>
                                 </div>
                                 <div class="chat-container" id="modelBChat">
                                     <!-- Messages will be dynamically added here -->
@@ -436,14 +436,7 @@
                             <i class="fas fa-thumbs-up"></i> B is better
                             <span class="vote-count ms-2"></span>
                         </button>
-                        <button class="vote-button vote-tie" id="voteTie">
-                            <i class="fas fa-heart"></i> Tie
-                            <span class="vote-count ms-2"></span>
-                        </button>
-                        <button class="vote-button vote-bad" id="voteBad">
-                            <i class="fas fa-thumbs-down"></i> Both are bad
-                            <span class="vote-count ms-2"></span>
-                        </button>
+                      
                     </div>
                     
                     <!-- Message Input -->
@@ -495,187 +488,10 @@ $(document).ready(function() {
     let currentComparisonId = null;
     
     // Track the user's current vote for this comparison
-    let userCurrentVote = null;
+   
     
     // Load vote counts when a comparison is loaded
-    function loadVoteCounts() {
-        if (!currentComparisonId) return;
-        
-        $.ajax({
-            url: '/get-tool-votes',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ 
-                toolIds: [
-                    `${currentComparisonId}_model_a`,
-                    `${currentComparisonId}_model_b`,
-                    `${currentComparisonId}_tie`,
-                    `${currentComparisonId}_both_bad`
-                ] 
-            }),
-            success: function(response) {
-                // Update UI with vote counts
-                if (response.votes) {
-                    updateVoteCountsUI(response.votes);
-                }
-                
-                // Also check user's current vote for this comparison
-                checkUserCurrentVote();
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    window.location.href = '/login_page';
-                } else {
-                    console.error('Failed to retrieve vote counts');
-                }
-            }
-        });
-    }
-    
-    // Check which option the user has already voted for
-    function checkUserCurrentVote() {
-        if (!currentComparisonId) return;
-        
-        $.ajax({
-            url: '/get-user-vote',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ 
-                comparisonId: currentComparisonId
-            }),
-            success: function(response) {
-                if (response.voted && response.toolId) {
-                    userCurrentVote = response.toolId;
-                    
-                    // Highlight the button the user previously voted for
-                    highlightUserVote(userCurrentVote);
-                } else {
-                    userCurrentVote = null;
-                    $('.vote-button').removeClass('active');
-                }
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    window.location.href = '/login_page';
-                } else {
-                    console.error('Failed to retrieve user vote');
-                    userCurrentVote = null;
-                }
-            }
-        });
-    }
-    
-    // Highlight the button that represents the user's current vote
-    function highlightUserVote(toolId) {
-        // Remove active class from all buttons
-        $('.vote-button').removeClass('active');
-        
-        // Add active class to the appropriate button
-        if (toolId.includes('_model_a')) {
-            $('#voteA').addClass('active');
-        } else if (toolId.includes('_model_b')) {
-            $('#voteB').addClass('active');
-        } else if (toolId.includes('_tie')) {
-            $('#voteTie').addClass('active');
-        } else if (toolId.includes('_both_bad')) {
-            $('#voteBad').addClass('active');
-        }
-    }
-    
-    // Update the UI with vote counts
-    function updateVoteCountsUI(votes) {
-        // Update vote counts in each button
-        updateButtonVoteCount('voteA', votes[`${currentComparisonId}_model_a`] || 0);
-        updateButtonVoteCount('voteB', votes[`${currentComparisonId}_model_b`] || 0);
-        updateButtonVoteCount('voteTie', votes[`${currentComparisonId}_tie`] || 0);
-        updateButtonVoteCount('voteBad', votes[`${currentComparisonId}_both_bad`] || 0);
-    }
-    
-    // Update the vote count display for a specific button
-    function updateButtonVoteCount(buttonId, count) {
-        const $voteCountEl = $(`#${buttonId} .vote-count`);
-        
-        if (count > 0) {
-            $voteCountEl.text(`(${count})`);
-            $voteCountEl.show();
-        } else {
-            $voteCountEl.text('');
-            $voteCountEl.hide();
-        }
-    }
-    
-    // Update voting functionality to use the API
-    $('.vote-button').off('click').on('click', function() {
-        if (!currentComparisonId) {
-            showNotification('Please ask a question first to compare models.');
-            return;
-        }
-        
-        // Get the vote type based on button ID
-        const voteType = $(this).attr('id');
-        let newVoteToolId;
-        
-        // Map vote button to the corresponding tool ID
-        switch(voteType) {
-            case 'voteA':
-                newVoteToolId = `${currentComparisonId}_model_a`;
-                break;
-            case 'voteB':
-                newVoteToolId = `${currentComparisonId}_model_b`;
-                break;
-            case 'voteTie':
-                newVoteToolId = `${currentComparisonId}_tie`;
-                break;
-            case 'voteBad':
-                newVoteToolId = `${currentComparisonId}_both_bad`;
-                break;
-            default:
-                return;
-        }
-        
-        // If user is clicking the same button they already voted for, do nothing
-        if (userCurrentVote === newVoteToolId) {
-            showNotification('You have already voted for this option.');
-            return;
-        }
-        
-        // Send vote to backend
-        $.ajax({
-            url: '/change-vote',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                comparisonId: currentComparisonId,
-                previousToolId: userCurrentVote,
-                newToolId: newVoteToolId
-            }),
-            success: function(response) {
-                if (response.success) {
-                    // Update UI with new vote counts
-                    updateVoteCountsUI(response.votes);
-                    
-                    // Update the user's current vote
-                    userCurrentVote = newVoteToolId;
-                    
-                    // Update UI to highlight user's vote
-                    highlightUserVote(userCurrentVote);
-                    
-                    showNotification('Your vote has been recorded.');
-                } else {
-                    showNotification(response.message || 'Failed to record your vote.');
-                }
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    window.location.href = '/login_page';
-                } else {
-                    showNotification('Failed to record your vote.');
-                    console.error('Vote API call failed:', xhr.responseText);
-                }
-            }
-        });
-    });
-    
+
     // Modify sendMessage function to set the comparison ID
     const originalSendMessage = sendMessage;
     sendMessage = function() {
@@ -969,6 +785,464 @@ function copyToClipboard(text) {
         console.error('Could not copy text: ', err);
     });
 }
+// Add this to your main JavaScript file
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - setting up voting system');
+    
+    const voteButtons = {
+        a: document.getElementById('voteA'),
+        b: document.getElementById('voteB'),
+        tie: document.getElementById('voteTie'),
+        bad: document.getElementById('voteBad')
+    };
+    
+    // Check if all vote buttons exist
+    if (!voteButtons.a || !voteButtons.b || !voteButtons.tie || !voteButtons.bad) {
+        console.error('Vote buttons not found! Button IDs might be incorrect.');
+        // Try to find them by class instead
+        const aBtns = document.querySelectorAll('.vote-a');
+        const bBtns = document.querySelectorAll('.vote-b');
+        const tieBtns = document.querySelectorAll('.vote-tie');
+        const badBtns = document.querySelectorAll('.vote-bad');
+        
+        if (aBtns.length) voteButtons.a = aBtns[0];
+        if (bBtns.length) voteButtons.b = bBtns[0];
+        if (tieBtns.length) voteButtons.tie = tieBtns[0];
+        if (badBtns.length) voteButtons.bad = badBtns[0];
+    }
+    
+    // Check again after attempt to find by class
+    Object.entries(voteButtons).forEach(([key, btn]) => {
+        if (!btn) {
+            console.error(`${key} button not found!`);
+        } else {
+            console.log(`${key} button found: `, btn);
+        }
+    });
+    
+    let currentQuestion = '';
+    let hasVoted = false;
+    let userVote = null;
+    
+    // Function to get CSRF token if your app uses it
+    function getCSRFToken() {
+        // Try different ways to get CSRF token
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        if (tokenMeta) return tokenMeta.getAttribute('content');
+        
+        const tokenInput = document.querySelector('input[name="csrf_token"]');
+        if (tokenInput) return tokenInput.value;
+        
+        // If you're using a different approach, modify as needed
+        return null;
+    }
+    
+    // Update vote counts display with better error handling
+    // Replace the updateVoteCounts function with this version
+// Replace the updateVoteCounts function
+function updateVoteCounts(counts, userVoteType = null) {
+    try {
+        // Check if counts object exists
+        if (!counts) {
+            console.error('Invalid counts object:', counts);
+            return;
+        }
+        
+        // Update button counts
+        const aCount = document.querySelector('#voteA .vote-count');
+        const bCount = document.querySelector('#voteB .vote-count');
+        const tieCount = document.querySelector('#voteTie .vote-count');
+        const badCount = document.querySelector('#voteBad .vote-count');
+        
+        if (aCount) aCount.textContent = counts.a || 0;
+        if (bCount) bCount.textContent = counts.b || 0;
+        if (tieCount) tieCount.textContent = counts.tie || 0;
+        if (badCount) badCount.textContent = counts.bad || 0;
+        
+        // Reset all active states and enable all buttons
+        Object.values(voteButtons).forEach(btn => {
+            if (btn) {
+                btn.classList.remove('active');
+                btn.disabled = false;
+            }
+        });
+        
+        // If user has voted, highlight their vote
+        if (userVoteType && voteButtons[userVoteType]) {
+            voteButtons[userVoteType].classList.add('active');
+            hasVoted = true;
+            userVote = userVoteType;
+        }
+    } catch (error) {
+        console.error('Error updating vote counts:', error);
+    }
+}
+
+// Replace the castVote function
+function castVote(voteType) {
+    if (!currentQuestion) {
+        console.error('No current question set');
+        showToast('Error: No question to vote on');
+        return;
+    }
+    
+    // Temporarily disable all buttons during API call
+    Object.values(voteButtons).forEach(btn => {
+        if (btn) btn.disabled = true;
+    });
+    
+    // Simple API call without any special flags
+    fetch('/cast-vote', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken() || ''
+        },
+        body: JSON.stringify({
+            question: currentQuestion,
+            vote_type: voteType
+        }),
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Got response:', response.status, response.statusText);
+        
+        if (response.status === 401) {
+            showToast('You must be logged in to vote');
+            throw new Error('User not logged in');
+        } else if (response.status === 409) {
+            // If already voted, just update the UI to reflect this new vote
+            // and let the user know what happened
+            if (hasVoted && userVote !== voteType) {
+                showToast('Changing your vote...');
+                
+                // Update our local state
+                hasVoted = true;
+                userVote = voteType;
+                
+                // Update the UI to reflect the new selection
+                Object.values(voteButtons).forEach(btn => {
+                    if (btn) btn.classList.remove('active');
+                });
+                if (voteButtons[voteType]) {
+                    voteButtons[voteType].classList.add('active');
+                }
+                
+                // Try to fetch latest vote counts
+                getVoteCounts();
+            } else {
+                showToast('You have already voted on this question');
+                // Refresh vote counts to get the current state
+                getVoteCounts();
+            }
+            return null;
+        } else if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`Server error: ${response.status} - ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data) {
+            console.log('Vote response data:', data);
+            updateVoteCounts(data.vote_counts, voteType);
+            showToast('Vote recorded!');
+            
+            // Show ELO changes
+            if (data.model_ratings) {
+                const modelA = data.model_ratings.eBrevia;
+                const modelB = data.model_ratings["Equally.ai"];
+                console.log(`ELO Ratings - eBrevia: ${modelA.rating.toFixed(1)}, Equally.ai: ${modelB.rating.toFixed(1)}`);
+                
+                // Update ELO displays if they exist
+                const eloA = document.getElementById('eloA');
+                const eloB = document.getElementById('eloB');
+                if (eloA) eloA.textContent = modelA.rating.toFixed(1);
+                if (eloB) eloB.textContent = modelB.rating.toFixed(1);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error casting vote:', error);
+        showToast('Error casting vote. Please try again.');
+    })
+    .finally(() => {
+        // Always re-enable all buttons when done
+        Object.values(voteButtons).forEach(btn => {
+            if (btn) btn.disabled = false;
+        });
+    });
+} 
+    // Add click handlers for vote buttons with error handling
+    Object.entries(voteButtons).forEach(([type, btn]) => {
+        if (btn) {
+            console.log(`Setting up click handler for ${type} button`);
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log(`${type} button clicked`);
+                castVote(type);
+            });
+        }
+    });
+    
+    // Function to get vote counts for current question
+    function getVoteCounts() {
+    if (!currentQuestion) {
+        console.log('No current question, not fetching vote counts');
+        return Promise.resolve(null);
+    }
+    
+    console.log(`Fetching vote counts for: ${currentQuestion}`);
+    
+    return fetch(`/question-votes/${encodeURIComponent(currentQuestion)}`, {
+        credentials: 'same-origin'
+    })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Error fetching vote counts: ${response.status} - ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Vote counts received:', data);
+            if (data.user_vote) {
+                updateVoteCounts(data.vote_counts, data.user_vote);
+            } else {
+                updateVoteCounts(data.vote_counts);
+            }
+            return data;
+        })
+        .catch(error => {
+            console.error('Error fetching vote counts:', error);
+            return null;
+        });
+}
+
+    // Modify the existing sendMessage function to handle votes
+    const originalSendMessage = window.sendMessage;
+    
+    if (originalSendMessage) {
+        console.log('Found existing sendMessage function, will extend it');
+        
+        window.sendMessage = function(message) {
+            console.log('sendMessage called with:', message);
+            
+            // Reset voting state for new question
+            hasVoted = false;
+            userVote = null;
+            currentQuestion = message;
+            
+            // Reset UI
+            Object.values(voteButtons).forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.disabled = false;
+                    const countSpan = btn.querySelector('.vote-count');
+                    if (countSpan) countSpan.textContent = '0';
+                }
+            });
+            
+            // Call the original function
+            originalSendMessage(message);
+            
+            // After sending message, check for existing votes after a delay
+            // to allow the models to respond
+            setTimeout(getVoteCounts, 2000);
+        };
+    } else {
+        console.warn('Original sendMessage function not found. Adding listener to message input instead.');
+        
+        // Alternative approach - listen for Enter key on input field
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        
+        if (messageInput && sendButton) {
+            const submitMessageHandler = function() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    // Reset voting state for new question
+                    hasVoted = false;
+                    userVote = null;
+                    currentQuestion = message;
+                    
+                    // Reset UI for vote buttons
+                    Object.values(voteButtons).forEach(btn => {
+                        if (btn) {
+                            btn.classList.remove('active');
+                            btn.disabled = false;
+                            const countSpan = btn.querySelector('.vote-count');
+                            if (countSpan) countSpan.textContent = '0';
+                        }
+                    });
+                    
+                    // Check for votes after a delay
+                    setTimeout(getVoteCounts, 2000);
+                }
+            };
+            
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitMessageHandler();
+                }
+            });
+            
+            sendButton.addEventListener('click', submitMessageHandler);
+        }
+    }
+    
+    // Helper function to show toast notification
+    function showToast(message) {
+        console.log('Toast message:', message);
+        
+        // Create toast if it doesn't exist
+        if (!document.getElementById('vote-toast')) {
+            const toast = document.createElement('div');
+            toast.id = 'vote-toast';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background-color: #333;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 4px;
+                z-index: 1000;
+                opacity: 0;
+                transition: opacity 0.3s;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            `;
+            document.body.appendChild(toast);
+        }
+        
+        const toast = document.getElementById('vote-toast');
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 3000);
+    }
+    
+    // Call this to check if initial setup worked
+    console.log('Voting system initialized');
+    showToast('Voting system ready');
+
+    
+    // Add ELO rating display to the UI
+ 
+    // Function to fetch and display current model ratings
+    function fetchModelRatings() {
+        fetch('/get-model-ratings')
+            .then(response => response.json())
+            .then(data => {
+                const modelA = data.ratings.find(m => m.model_name === 'eBrevia');
+                const modelB = data.ratings.find(m => m.model_name === 'Equally.ai');
+                
+                if (modelA) {
+                    document.getElementById('eloA').textContent = modelA.elo_rating.toFixed(1);
+                }
+                
+                if (modelB) {
+                    document.getElementById('eloB').textContent = modelB.elo_rating.toFixed(1);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching model ratings:', error);
+            });
+    }
+    
+    // Function to show detailed model stats modal
+    function showModelStats() {
+        fetch('/get-model-ratings')
+            .then(response => response.json())
+            .then(data => {
+                // Create modal if it doesn't exist
+                if (!document.getElementById('statsModal')) {
+                    const modalDiv = document.createElement('div');
+                    modalDiv.className = 'modal fade';
+                    modalDiv.id = 'statsModal';
+                    modalDiv.tabIndex = '-1';
+                    modalDiv.innerHTML = `
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Model Performance Stats</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" id="statsModalBody">
+                                    <!-- Stats will be inserted here -->
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modalDiv);
+                }
+                
+                // Populate stats
+                const statsBody = document.getElementById('statsModalBody');
+                statsBody.innerHTML = '';
+                
+                data.ratings.forEach(model => {
+                    const winRate = model.total_matches > 0 ? 
+                        ((model.wins / model.total_matches) * 100).toFixed(1) : 0;
+                    
+                    const modelDiv = document.createElement('div');
+                    modelDiv.className = 'model-stats mb-4';
+                    modelDiv.innerHTML = `
+                        <h4>${model.model_name}</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">ELO Rating</span>
+                                <span class="stat-value">${model.elo_rating.toFixed(1)}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Wins</span>
+                                <span class="stat-value">${model.wins}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Losses</span>
+                                <span class="stat-value">${model.losses}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Ties</span>
+                                <span class="stat-value">${model.ties}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Win Rate</span>
+                                <span class="stat-value">${winRate}%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Matches</span>
+                                <span class="stat-value">${model.total_matches}</span>
+                            </div>
+                        </div>
+                    `;
+                    statsBody.appendChild(modelDiv);
+                });
+                
+                // Show the modal using Bootstrap
+                const modal = new bootstrap.Modal(document.getElementById('statsModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching model stats:', error);
+                showToast('Error loading model stats');
+            });
+    }
+    
+    // Add ELO display when page loads
+    addEloRatingDisplay();
+    
+    // Update ELO ratings periodically
+    setInterval(fetchModelRatings, 60000); // Every minute
+});
     </script>
 </body>
 </html>

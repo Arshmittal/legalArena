@@ -24,11 +24,14 @@
                 Vendor Onboarding
             </a>
             <a href="/compare" id="compareToolBtn" class="compare-tool-btn {% if not user %}disabled{% endif %}">
-                Compare Tool
+                Arena(side-by-side)
             </a>
            
             <a href="/tools" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
-                Compare Model
+                Arena
+            </a>
+            <a href="/leaderboard" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
+                Leaderboard
             </a>
            
             {% if user %}
@@ -123,7 +126,7 @@
             
             <div class="button-container">
                 <a href="/tools" id="exploreToolBtn" class="explore-btn {% if not user %}disabled{% endif %}">
-                    Compare The Model <i class="fas fa-arrow-right"></i>
+                    Compare The Tool<i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         </div>
@@ -791,62 +794,8 @@
         <!-- How It Works Section - UPDATED -->
         
         
-        <!-- Testimonials Section -->
-        <section class="testimonials-section">
-            <h2>What Our Users Say</h2>
-            <div class="testimonial-carousel-container">
-                <button class="testimonial-carousel-button prev" id="prevTestimonialBtn"><i class="fas fa-chevron-left"></i></button>
-                <div class="testimonial-carousel-track" id="testimonialTrack">
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote"><i class="fas fa-quote-left"></i></div>
-                        <p class="testimonial-text">"LegalChatbot has revolutionized our contract review process. What used to take hours now takes minutes, with even better accuracy."</p>
-                        <div class="testimonial-author">
-                            <img src="/api/placeholder/60/60" alt="Sarah Johnson" class="testimonial-avatar">
-                            <div class="testimonial-info">
-                                <h4>Sarah Johnson</h4>
-                                <p>Corporate Counsel, Tech Innovations Inc.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote"><i class="fas fa-quote-left"></i></div>
-                        <p class="testimonial-text">"As a solo practitioner, this tool has been invaluable. It's like having an associate review my documents at a fraction of the cost."</p>
-                        <div class="testimonial-author">
-                            <img src="/api/placeholder/60/60" alt="Michael Rodriguez" class="testimonial-avatar">
-                            <div class="testimonial-info">
-                                <h4>Michael Rodriguez</h4>
-                                <p>Attorney, Rodriguez Law Firm</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote"><i class="fas fa-quote-left"></i></div>
-                        <p class="testimonial-text">"The case research functionality has helped us find relevant precedents we might have missed otherwise. It's a game-changer for our litigation team."</p>
-                        <div class="testimonial-author">
-                            <img src="/api/placeholder/60/60" alt="Jennifer Lee" class="testimonial-avatar">
-                            <div class="testimonial-info">
-                                <h4>Jennifer Lee</h4>
-                                <p>Partner, Freeman & Associates</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-card">
-                        <div class="testimonial-quote"><i class="fas fa-quote-left"></i></div>
-                        <p class="testimonial-text">"LegalChatbot has increased our efficiency by 70%. We can now handle more cases and provide faster service to our clients."</p>
-                        <div class="testimonial-author">
-                            <img src="/api/placeholder/60/60" alt="David Thornton" class="testimonial-avatar">
-                            <div class="testimonial-info">
-                                <h4>David Thornton</h4>
-                                <p>Legal Operations Manager, Global Law LLP</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button class="testimonial-carousel-button next" id="nextTestimonialBtn"><i class="fas fa-chevron-right"></i></button>
-            </div>
-        </section>
+        
 
-        <!-- Call to Action - UPDATED -->
         <section class="cta-section">
             <div class="cta-content">
                 <h2>Ready to Transform Your Legal Practice?</h2>
@@ -860,6 +809,29 @@
                 </div>
             </div>
         </section>
+        <section class="feedback-section">
+            <h2>Your Feedback Matters</h2>
+            <div class="feedback-form">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" id="name" placeholder="Enter your name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="feedback">Your Feedback</label>
+                    <textarea id="feedback" placeholder="Please share your thoughts about our service"></textarea>
+                </div>
+                
+                <button id="submitFeedback" class="submit-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit
+                </button>
+                
+                <div id="feedbackMessage" class="feedback-message"></div>
+            </div>
+        </section>
+        <!-- Call to Action - UPDATED -->
+        
     
     </section>
 </div>
@@ -1263,7 +1235,60 @@ window.onclick = function(event) {
         }
     }
 }
+// This code would go in your HTML file's script section
 
+document.getElementById('submitFeedback').addEventListener('click', function() {
+    const name = document.getElementById('name').value.trim();
+    const feedback = document.getElementById('feedback').value.trim();
+    const messageEl = document.getElementById('feedbackMessage');
+    
+    // Basic validation
+    if (!name || !feedback) {
+        messageEl.textContent = 'Please fill in all fields';
+        messageEl.className = 'feedback-message error';
+        return;
+    }
+    
+    // Prepare data for submission
+    const feedbackData = {
+        name: name,
+        feedback: feedback,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Send to FastAPI backend
+    fetch(`${API_BASE_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedbackData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Handle success
+        document.getElementById('name').value = '';
+        document.getElementById('feedback').value = '';
+        messageEl.textContent = 'Thank you for your feedback!';
+        messageEl.className = 'feedback-message success';
+        
+        // Hide message after 3 seconds
+        setTimeout(() => {
+            messageEl.className = 'feedback-message';
+        }, 3000);
+    })
+    .catch(error => {
+        // Handle error
+        messageEl.textContent = 'Error submitting feedback. Please try again.';
+        messageEl.className = 'feedback-message error';
+        console.error('Error:', error);
+    });
+});
     </script>
 </body>
 </html>
