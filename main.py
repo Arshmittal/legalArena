@@ -1,4 +1,4 @@
-from email.quoprimime import unquote
+from urllib.parse import unquote
 from http.client import HTTPException
 import os
 import logging
