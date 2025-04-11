@@ -1057,7 +1057,7 @@
         });
         // Modal functionality
 // Add this at the top of your JavaScript file
-const API_BASE_URL = "http://127.0.0.1:5000"; // Replace with your actual API server URL and port
+const API_BASE_URL = window.location.origin;// Replace with your actual API server URL and port
 
 // Updated login function using fetch
 function handleLogin(event) {
