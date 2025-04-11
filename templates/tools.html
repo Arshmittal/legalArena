@@ -593,57 +593,73 @@ $(document).ready(function() {
     }
     
     function sendMessage() {
-        const messageText = $('#messageInput').val().trim();
+    const messageText = $('#messageInput').val().trim();
+   
+    if (messageText) {
+        console.log("Sending message:", messageText);
         
-        if (messageText) {
-            // Add user message to both chat windows
-            addMessage('modelAChat', messageText, 'user');
-            addMessage('modelBChat', messageText, 'user');
-            
-            // Clear input
-            $('#messageInput').val('');
-            
-            // Show loading indicators
-            addLoadingIndicator('modelAChat');
-            addLoadingIndicator('modelBChat');
-            
-            // Call backend API to get model responses
-            $.ajax({
-                url: '/query-models',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ question: messageText }),
-                success: function(response) {
-                    // Remove loading indicators
-                    removeLoadingIndicator('modelAChat');
-                    removeLoadingIndicator('modelBChat');
-                    
-                    // Update model names
-                    $('.model-card:first .model-title').text(response.model_a.name);
-                    $('.model-card:last .model-title').text(response.model_b.name);
-                    
-                    // Add model responses with metrics
-                    addModelResponse('modelAChat', response.model_a.response, response.model_a.metrics);
-                    addModelResponse('modelBChat', response.model_b.response, response.model_b.metrics);
-                },
-                error: function(xhr) {
-                    // Remove loading indicators
-                    removeLoadingIndicator('modelAChat');
-                    removeLoadingIndicator('modelBChat');
-                    
-                    if (xhr.status === 401) {
-                        // Redirect to login if unauthorized
-                        window.location.href = '/login_page';
-                    } else {
-                        // Show error message
-                        addMessage('modelAChat', 'Error: Failed to get response.', 'bot');
-                        addMessage('modelBChat', 'Error: Failed to get response.', 'bot');
-                        console.error('API call failed:', xhr.responseText);
-                    }
+        // Add user message to both chat windows
+        addMessage('modelAChat', messageText, 'user');
+        addMessage('modelBChat', messageText, 'user');
+       
+        // Clear input
+        $('#messageInput').val('');
+       
+        // Show loading indicators
+        addLoadingIndicator('modelAChat');
+        addLoadingIndicator('modelBChat');
+       
+        // Call backend API to get model responses
+        $.ajax({
+            url: '/query-models',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ question: messageText }),
+            success: function(response) {
+                console.log("API Response received:", response);
+                
+                // Remove loading indicators
+                removeLoadingIndicator('modelAChat');
+                removeLoadingIndicator('modelBChat');
+               
+                // Debug response data
+                console.log("Model A name:", response.model_a.name);
+                console.log("Model A response length:", response.model_a.response.length);
+                console.log("Model B name:", response.model_b.name);
+                console.log("Model B response length:", response.model_b.response.length);
+               
+                // Update model names
+                $('.model-card:first .model-title').text(response.model_a.name);
+                $('.model-card:last .model-title').text(response.model_b.name);
+               
+                // Add model responses with metrics
+                addModelResponse('modelAChat', response.model_a.response, response.model_a.metrics);
+                addModelResponse('modelBChat', response.model_b.response, response.model_b.metrics);
+                
+                console.log("Response display complete");
+            },
+            error: function(xhr, status, error) {
+                console.error("API Error:", status, error);
+                console.error("Response:", xhr.responseText);
+                
+                // Remove loading indicators
+                removeLoadingIndicator('modelAChat');
+                removeLoadingIndicator('modelBChat');
+               
+                if (xhr.status === 401) {
+                    console.log("Unauthorized - redirecting to login");
+                    // Redirect to login if unauthorized
+                    window.location.href = '/login_page';
+                } else {
+                    // Show error message
+                    addMessage('modelAChat', 'Error: Failed to get response.', 'bot');
+                    addMessage('modelBChat', 'Error: Failed to get response.', 'bot');
+                    console.error('API call failed:', xhr.responseText);
                 }
-            });
-        }
+            }
+        });
     }
+}
     
     function addMessage(containerId, text, type) {
         const messageClass = type === 'user' ? 'user-message' : 'bot-message';

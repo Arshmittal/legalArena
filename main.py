@@ -573,13 +573,17 @@ def logout():
 @app.route("/query-models", methods=["POST"])
 def query_models():
     """Endpoint to query both LLM models and evaluate their responses"""
+    print("==== QUERY MODELS ENDPOINT HIT ====")
     if "user" not in session:
+        print("ERROR: User not logged in")
         return jsonify({"error": "User not logged in"}), 401
    
     data = request.json
     question = data.get("question")
+    print(f"Question received: {question}")
    
     if not question:
+        print("ERROR: No question provided")
         return jsonify({"error": "Question is required"}), 400
    
     logger.info(f"Processing question: {question}")
@@ -590,9 +594,14 @@ def query_models():
    
     # Query the models for new responses using Together API
     logger.info("Querying Llama model...")
+    print("Calling Together API for Llama model...")
     llama_response = call_together_api(question, LLAMA_MODEL)
+    print(f"Llama response received (length: {len(llama_response) if llama_response else 0})")
+    
     logger.info("Querying DeepSeek model...")
+    print("Calling Together API for DeepSeek model...")
     deepseek_response = call_together_api(question, DEEPSEEK_MODEL)
+    print(f"DeepSeek response received (length: {len(deepseek_response) if deepseek_response else 0})")
     
     # Log response lengths for debugging
     logger.debug(f"Response lengths - Llama: {len(llama_response)}, DeepSeek: {len(deepseek_response)}")
@@ -608,8 +617,10 @@ def query_models():
             model_name="llama"
         )
         llama_metrics = parse_evaluation_metrics(llama_evaluation)
+        print(f"Llama metrics: {llama_metrics}")
     except Exception as e:
         logger.error(f"Error during Llama evaluation: {e}")
+        print(f"ERROR evaluating Llama: {e}")
         llama_metrics = {"accuracy": 0, "completeness": 0, "helpfulness": 0, "clarity": 0, "comparison": 0}
     
     # Process DeepSeek with a small delay to avoid API rate limits
@@ -625,8 +636,10 @@ def query_models():
             model_name="deepseek"
         )
         deepseek_metrics = parse_evaluation_metrics(deepseek_evaluation)
+        print(f"DeepSeek metrics: {deepseek_metrics}")
     except Exception as e:
         logger.error(f"Error during DeepSeek evaluation: {e}")
+        print(f"ERROR evaluating DeepSeek: {e}")
         deepseek_metrics = {"accuracy": 0, "completeness": 0, "helpfulness": 0, "clarity": 0, "comparison": 0}
     
     # Save the model responses to MongoDB
@@ -652,6 +665,7 @@ def query_models():
         logger.info(f"Llama response saved: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
     except Exception as e:
         logger.error(f"Error saving Llama response to MongoDB: {e}")
+        print(f"ERROR saving Llama response: {e}")
    
     # Save DeepSeek response to deepseek collection
     deepseek_doc = {
@@ -672,6 +686,7 @@ def query_models():
         logger.info(f"DeepSeek response saved: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
     except Exception as e:
         logger.error(f"Error saving DeepSeek response to MongoDB: {e}")
+        print(f"ERROR saving DeepSeek response: {e}")
     
     # Get existing vote counts for this question
     vote_counts = {
@@ -688,7 +703,7 @@ def query_models():
         "user_id": user_id
     })
    
-    return jsonify({
+    response_data = {
         "question": question,
         "model_a": {
             "name": "eBrevia",
@@ -704,8 +719,23 @@ def query_models():
             "counts": vote_counts,
             "user_vote": user_vote["vote_type"] if user_vote else None
         }
-    })
+    }
+    
+    logger.info("==== FINAL RESPONSE BEING RETURNED ====")
+    logger.info(f"Response size: {len(str(response_data))} bytes")
+    logger.info(f"Model A response length: {len(response_data['model_a']['response'])}")
+    logger.info(f"Model B response length: {len(response_data['model_b']['response'])}")
+    
+    return jsonify(response_data)
+@app.after_request
+def after_request(response):
+    logger.info(f"Sending response with status: {response.status_code}, size: {len(response.data)} bytes")
+    return response
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
+    return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 @app.route("/get-recent-questions", methods=["GET"])
 def get_recent_questions():
     """Get a list of recently asked questions from both model collections"""
