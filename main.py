@@ -727,16 +727,7 @@ def query_models():
     logger.info(f"Model B response length: {len(response_data['model_b']['response'])}")
     
     return jsonify(response_data)
-@app.after_request
-def after_request(response):
-    logger.info(f"Sending response with status: {response.status_code}, size: {len(response.data)} bytes")
-    return response
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-    logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
-    return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-@app.route("/get-recent-questions", methods=["GET"])
 def get_recent_questions():
     """Get a list of recently asked questions from both model collections"""
     if "user" not in session:
