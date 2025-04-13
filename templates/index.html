@@ -20,19 +20,21 @@
        
         <!-- Right: Auth Section -->
         <div class="auth-container">
-            <a href="/vendor-onboarding" id="vendorOnboardingBtn" class="vendor-onboarding-btn {% if not user %}disabled{% endif %}">
-                Vendor Onboarding
-            </a>
-            <a href="/compare" id="compareToolBtn" class="compare-tool-btn {% if not user %}disabled{% endif %}">
-                Arena(side-by-side)
-            </a>
-           
-            <a href="/tools" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
-                Arena
-            </a>
             <a href="/leaderboard" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
                 Leaderboard
             </a>
+            <a href="/tools" id="testToolBtn" class="test-tool-btn {% if not user %}disabled{% endif %}">
+                BitArena
+            </a>
+            <a href="/vendor-onboarding" id="vendorOnboardingBtn" class="vendor-onboarding-btn {% if not user %}disabled{% endif %}">
+                ToolDrop
+            </a>
+            <a href="/compare" id="compareToolBtn" class="compare-tool-btn {% if not user %}disabled{% endif %}">
+                ToolDeck
+            </a>
+           
+            
+            
            
             {% if user %}
                 <!-- User Profile (when logged in) -->
@@ -115,39 +117,22 @@
     </div>
 
     <!-- Hero Section -->
-    <div class="hero-section">
-        <div class="hero-content">
-            <h1>
-                Transform Legal Work with AI-Powered
-                <span class="accent-text">Excellence</span>
-            </h1>
-           
-            <p>Leverage cutting-edge artificial intelligence to evaluate, analyze, and optimize your legal documents with unparalleled accuracy and speed.</p>
-            
-            <div class="button-container">
-                <a href="/tools" id="exploreToolBtn" class="explore-btn {% if not user %}disabled{% endif %}">
-                    Compare The Tool<i class="fas fa-arrow-right"></i>
-                </a>
+   
+    
+   
+    <div class="info-section">
+        <div class="container">
+            <h2>What is Legal Ai Arena?</h2>
+            <div class="info-content">
+                <p><strong>Legal AI Arena</strong> is an interactive platform where users can explore, compare, and evaluate the performance of AI tools on real-world legal challenges. Our mission is to provide a dynamic environment for testing and showcasing the capabilities of various legal AI models in solving complex legal problems.</p> <p>Users can try out different tools, compare their responses side-by-side, and cast live votes based on the quality and relevance of the output. This community-driven evaluation helps highlight strengths and weaknesses of each tool in real time.</p> <p>To make tool performance transparent and easy to track, we feature a live leaderboard displaying model rankings based on user votes and response quality across multiple challenges. This enables users to see which models consistently perform best and how they stack up against others in a competitive setting.</p>
+                
+                
+                
             </div>
         </div>
-        
-        <div class="hero-illustration">
-            <img src="/static/vector.png" alt="Legal AI Illustration">
-        </div>
-        
-        <!-- Background shapes -->
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
     </div>
-
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <!-- Introduction Section -->
-        <section class="intro-section">
-            <h2>Welcome to the Legal Tools Arena</h2>
-            <p>The Legal Tools Arena is a platform for evaluating and comparing the capabilities of various legal technology solutions. This leaderboard showcases the performance of different tools based on user feedback, accuracy metrics, and benchmark tests focused on legal applications.</p>
-        </section>
+    
+   
 
         <section class="categories-section">
         <h2 class="section-title">Legal AI Arena Leaderboard Categories</h2>
@@ -792,23 +777,6 @@
 
 
         <!-- How It Works Section - UPDATED -->
-        
-        
-        
-
-        <section class="cta-section">
-            <div class="cta-content">
-                <h2>Ready to Transform Your Legal Practice?</h2>
-                <p>Sign up now to access our comparison platform and find the best legal technology tools for your specific needs.</p>
-                <div class="cta-buttons">
-                    <a href="/tools" id="testToolBtn" class="cta-button {% if not user %}disabled{% endif %}">
-                        Get Started
-                    </a>
-                    
-                   
-                </div>
-            </div>
-        </section>
         <section class="feedback-section">
             <h2>Your Feedback Matters</h2>
             <div class="feedback-form">
