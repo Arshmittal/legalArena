@@ -3,7 +3,7 @@ from http.client import HTTPException
 import os
 import logging
 import pandas as pd
-from flask import Flask, json, jsonify, redirect, url_for, session, request, render_template, url_for,  flash
+from flask import Flask, Response, json, jsonify, redirect, url_for, session, request, render_template, url_for,  flash
 from flask_session import Session
 from flask import Flask, request, jsonify, render_template
 from authlib.integrations.flask_client import OAuth
@@ -138,6 +138,7 @@ google = oauth.register(
         'prompt': 'select_account'
     }
 )
+
 
 def call_together_api(question, model_name):
     """Call the Together API to generate a response using the specified model"""
@@ -570,16 +571,21 @@ def logout():
     return redirect(url_for("home"))
 
 
-@app.route("/query-models", methods=["POST"])
+@app.route("/query-models", methods=["POST", "GET"])
 def query_models():
-    """Endpoint to query both LLM models and evaluate their responses"""
+    """Endpoint to query both LLM models and evaluate their responses sequentially"""
     print("==== QUERY MODELS ENDPOINT HIT ====")
     if "user" not in session:
         print("ERROR: User not logged in")
         return jsonify({"error": "User not logged in"}), 401
-   
-    data = request.json
-    question = data.get("question")
+    
+    # Handle GET request for EventSource
+    if request.method == "GET":
+        question = request.args.get("question")
+    else:  # POST request
+        data = request.json
+        question = data.get("question")
+        
     print(f"Question received: {question}")
    
     if not question:
@@ -587,106 +593,32 @@ def query_models():
         return jsonify({"error": "Question is required"}), 400
    
     logger.info(f"Processing question: {question}")
-   
-    # Get previous responses for each model (if they exist)
-    prev_llama_response = get_previous_model_response(question, "llama")
-    prev_deepseek_response = get_previous_model_response(question, "deepseek")
-   
-    # Query the models for new responses using Together API
-    logger.info("Querying Llama model...")
-    print("Calling Together API for Llama model...")
-    llama_response = call_together_api(question, LLAMA_MODEL)
-    print(f"Llama response received (length: {len(llama_response) if llama_response else 0})")
     
-    logger.info("Querying DeepSeek model...")
-    print("Calling Together API for DeepSeek model...")
-    deepseek_response = call_together_api(question, DEEPSEEK_MODEL)
-    print(f"DeepSeek response received (length: {len(deepseek_response) if deepseek_response else 0})")
-    
-    # Log response lengths for debugging
-    logger.debug(f"Response lengths - Llama: {len(llama_response)}, DeepSeek: {len(deepseek_response)}")
-   
-    # Process responses to ensure they're valid
-    try:
-        # Evaluate Llama response
-        logger.info(f"Evaluating Llama response...")
-        llama_evaluation = call_dify_workflow(
-            question, 
-            llama_response,
-            prev_llama_response if prev_llama_response else None,
-            model_name="llama"
-        )
-        llama_metrics = parse_evaluation_metrics(llama_evaluation)
-        print(f"Llama metrics: {llama_metrics}")
-    except Exception as e:
-        logger.error(f"Error during Llama evaluation: {e}")
-        print(f"ERROR evaluating Llama: {e}")
-        llama_metrics = {"accuracy": 0, "completeness": 0, "helpfulness": 0, "clarity": 0, "comparison": 0}
-    
-    # Process DeepSeek with a small delay to avoid API rate limits
-    time.sleep(1)
-    
-    try:
-        # Evaluate DeepSeek response
-        logger.info(f"Evaluating DeepSeek response...")
-        deepseek_evaluation = call_dify_workflow(
-            question, 
-            deepseek_response,
-            prev_deepseek_response if prev_deepseek_response else None,
-            model_name="deepseek"
-        )
-        deepseek_metrics = parse_evaluation_metrics(deepseek_evaluation)
-        print(f"DeepSeek metrics: {deepseek_metrics}")
-    except Exception as e:
-        logger.error(f"Error during DeepSeek evaluation: {e}")
-        print(f"ERROR evaluating DeepSeek: {e}")
-        deepseek_metrics = {"accuracy": 0, "completeness": 0, "helpfulness": 0, "clarity": 0, "comparison": 0}
-    
-    # Save the model responses to MongoDB
-    timestamp = datetime.utcnow()
-    user_email = session["user"]["email"]
-   
-    # Save Llama response to llama collection
-    llama_doc = {
+    # Create response object that will be updated as models complete
+    response_data = {
         "question": question,
-        "response": llama_response,
-        "evaluation": llama_evaluation,
-        "metrics": llama_metrics,
-        "updated_at": timestamp,
-        "updated_by": user_email
+        "model_a": {
+            "name": "eBrevia",
+            "response": "",
+            "metrics": {},
+            "status": "pending"
+        },
+        "model_b": {
+            "name": "Equally.ai",
+            "response": "",
+            "metrics": {},
+            "status": "pending"
+        },
+        "votes": {
+            "counts": {
+                "a": 0,
+                "b": 0,
+                "tie": 0,
+                "bad": 0
+            },
+            "user_vote": None
+        }
     }
-   
-    try:
-        result = llama_responses_collection.update_one(
-            {"question": question},
-            {"$set": llama_doc},
-            upsert=True
-        )
-        logger.info(f"Llama response saved: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
-    except Exception as e:
-        logger.error(f"Error saving Llama response to MongoDB: {e}")
-        print(f"ERROR saving Llama response: {e}")
-   
-    # Save DeepSeek response to deepseek collection
-    deepseek_doc = {
-        "question": question,
-        "response": deepseek_response,
-        "evaluation": deepseek_evaluation,
-        "metrics": deepseek_metrics,
-        "updated_at": timestamp,
-        "updated_by": user_email
-    }
-   
-    try:
-        result = deepseek_responses_collection.update_one(
-            {"question": question},
-            {"$set": deepseek_doc},
-            upsert=True
-        )
-        logger.info(f"DeepSeek response saved: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
-    except Exception as e:
-        logger.error(f"Error saving DeepSeek response to MongoDB: {e}")
-        print(f"ERROR saving DeepSeek response: {e}")
     
     # Get existing vote counts for this question
     vote_counts = {
@@ -697,37 +629,162 @@ def query_models():
     }
     
     # Check if user has already voted
-    user_id = session["user"].get("id") or user_email
+    user_id = session["user"].get("id") or session["user"]["email"]
     user_vote = votes_collection.find_one({
         "question": question,
         "user_id": user_id
     })
-   
-    response_data = {
-        "question": question,
-        "model_a": {
-            "name": "eBrevia",
+    
+    response_data["votes"]["counts"] = vote_counts
+    response_data["votes"]["user_vote"] = user_vote["vote_type"] if user_vote else None
+    
+    # Extract user info from session before passing to generator
+    user_email = session["user"]["email"]
+    
+    # This will enable us to stream the response
+    return Response(
+        stream_model_responses(question, response_data, user_email),
+        content_type="text/event-stream"
+    )
+def stream_model_responses(question, response_data, user_email):
+    """Generator function to stream model responses as they become available"""
+    # user_email is now passed as a parameter instead of accessing from session
+    timestamp = datetime.utcnow()
+    
+    # Start with the initial state
+    yield f"data: {json.dumps(response_data)}\n\n"
+    
+    # Process Llama model first
+    try:
+        # Get previous response
+        prev_llama_response = get_previous_model_response(question, "llama")
+        
+        # Query Llama model
+        logger.info("Querying Llama model...")
+        print("Calling Together API for Llama model...")
+        llama_response = call_together_api(question, LLAMA_MODEL)
+        print(f"Llama response received (length: {len(llama_response) if llama_response else 0})")
+        
+        # Update response object with Llama results
+        response_data["model_a"]["response"] = llama_response
+        response_data["model_a"]["status"] = "evaluating"
+        
+        # Send partial update
+        yield f"data: {json.dumps(response_data)}\n\n"
+        
+        # Evaluate Llama response
+        logger.info(f"Evaluating Llama response...")
+        llama_evaluation = call_dify_workflow(
+            question, 
+            llama_response,
+            prev_llama_response if prev_llama_response else None,
+            model_name="llama"
+        )
+        llama_metrics = parse_evaluation_metrics(llama_evaluation)
+        print(f"Llama metrics: {llama_metrics}")
+        
+        # Update response with metrics
+        response_data["model_a"]["metrics"] = llama_metrics
+        response_data["model_a"]["status"] = "complete"
+        
+        # Send updated data
+        yield f"data: {json.dumps(response_data)}\n\n"
+        
+        # Save Llama response to MongoDB
+        llama_doc = {
+            "question": question,
             "response": llama_response,
-            "metrics": llama_metrics
-        },
-        "model_b": {
-            "name": "Equally.ai",
-            "response": deepseek_response,
-            "metrics": deepseek_metrics
-        },
-        "votes": {
-            "counts": vote_counts,
-            "user_vote": user_vote["vote_type"] if user_vote else None
+            "evaluation": llama_evaluation,
+            "metrics": llama_metrics,
+            "updated_at": timestamp,
+            "updated_by": user_email
         }
-    }
+        
+        # Save to database in background
+        try:
+            result = llama_responses_collection.update_one(
+                {"question": question},
+                {"$set": llama_doc},
+                upsert=True
+            )
+            logger.info(f"Llama response saved: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
+        except Exception as e:
+            logger.error(f"Error saving Llama response to MongoDB: {e}")
+            print(f"ERROR saving Llama response: {e}")
+            
+    except Exception as e:
+        logger.error(f"Error processing Llama model: {e}")
+        response_data["model_a"]["response"] = f"Error: {str(e)}"
+        response_data["model_a"]["status"] = "error"
+        yield f"data: {json.dumps(response_data)}\n\n"
     
-    logger.info("==== FINAL RESPONSE BEING RETURNED ====")
-    logger.info(f"Response size: {len(str(response_data))} bytes")
-    logger.info(f"Model A response length: {len(response_data['model_a']['response'])}")
-    logger.info(f"Model B response length: {len(response_data['model_b']['response'])}")
+    # Now process DeepSeek model
+    try:
+        # Get previous response
+        prev_deepseek_response = get_previous_model_response(question, "deepseek")
+        
+        # Query DeepSeek model
+        logger.info("Querying DeepSeek model...")
+        print("Calling Together API for DeepSeek model...")
+        deepseek_response = call_together_api(question, DEEPSEEK_MODEL)
+        print(f"DeepSeek response received (length: {len(deepseek_response) if deepseek_response else 0})")
+        
+        # Update response object with DeepSeek results
+        response_data["model_b"]["response"] = deepseek_response
+        response_data["model_b"]["status"] = "evaluating"
+        
+        # Send partial update
+        yield f"data: {json.dumps(response_data)}\n\n"
+        
+        # Evaluate DeepSeek response
+        logger.info(f"Evaluating DeepSeek response...")
+        deepseek_evaluation = call_dify_workflow(
+            question, 
+            deepseek_response,
+            prev_deepseek_response if prev_deepseek_response else None,
+            model_name="deepseek"
+        )
+        deepseek_metrics = parse_evaluation_metrics(deepseek_evaluation)
+        print(f"DeepSeek metrics: {deepseek_metrics}")
+        
+        # Update response with metrics
+        response_data["model_b"]["metrics"] = deepseek_metrics
+        response_data["model_b"]["status"] = "complete"
+        
+        # Send final data
+        yield f"data: {json.dumps(response_data)}\n\n"
+        
+        # Save DeepSeek response to MongoDB
+        deepseek_doc = {
+            "question": question,
+            "response": deepseek_response,
+            "evaluation": deepseek_evaluation,
+            "metrics": deepseek_metrics,
+            "updated_at": timestamp,
+            "updated_by": user_email
+        }
+        
+        # Save to database in background
+        try:
+            result = deepseek_responses_collection.update_one(
+                {"question": question},
+                {"$set": deepseek_doc},
+                upsert=True
+            )
+            logger.info(f"DeepSeek response saved: matched={result.matched_count}, modified={result.modified_count}, upserted_id={result.upserted_id}")
+        except Exception as e:
+            logger.error(f"Error saving DeepSeek response to MongoDB: {e}")
+            print(f"ERROR saving DeepSeek response: {e}")
+            
+    except Exception as e:
+        logger.error(f"Error processing DeepSeek model: {e}")
+        response_data["model_b"]["response"] = f"Error: {str(e)}"
+        response_data["model_b"]["status"] = "error"
+        yield f"data: {json.dumps(response_data)}\n\n"
     
-    return jsonify(response_data)
-
+    # Send complete message to signify end of stream
+    response_data["status"] = "complete"
+    yield f"data: {json.dumps(response_data)}\n\n"
 def get_recent_questions():
     """Get a list of recently asked questions from both model collections"""
     if "user" not in session:

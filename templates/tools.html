@@ -592,7 +592,8 @@ $(document).ready(function() {
         });
     }
     
-    function sendMessage() {
+   
+function sendMessage() {
     const messageText = $('#messageInput').val().trim();
    
     if (messageText) {
@@ -608,90 +609,174 @@ $(document).ready(function() {
         // Show loading indicators
         addLoadingIndicator('modelAChat');
         addLoadingIndicator('modelBChat');
-       
-        // Call backend API to get model responses
-        $.ajax({
-            url: '/query-models',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ question: messageText }),
-            success: function(response) {
-                console.log("API Response received:", response);
-                
-                // Remove loading indicators
-                removeLoadingIndicator('modelAChat');
-                removeLoadingIndicator('modelBChat');
-               
-                // Debug response data
-                console.log("Model A name:", response.model_a.name);
-                console.log("Model A response length:", response.model_a.response.length);
-                console.log("Model B name:", response.model_b.name);
-                console.log("Model B response length:", response.model_b.response.length);
-               
-                // Update model names
+        
+        // Set up EventSource for streaming responses
+        const eventSource = new EventSource(`/query-models?question=${encodeURIComponent(messageText)}`);
+        
+        // Handle incoming events
+        eventSource.onmessage = function(event) {
+            const response = JSON.parse(event.data);
+            console.log("Stream update received:", response);
+            
+            // Update model A (if available)
+            if (response.model_a) {
+                // Update model name
                 $('.model-card:first .model-title').text(response.model_a.name);
-                $('.model-card:last .model-title').text(response.model_b.name);
-               
-                // Add model responses with metrics
-                addModelResponse('modelAChat', response.model_a.response, response.model_a.metrics);
-                addModelResponse('modelBChat', response.model_b.response, response.model_b.metrics);
                 
-                console.log("Response display complete");
-            },
-            error: function(xhr, status, error) {
-                console.error("API Error:", status, error);
-                console.error("Response:", xhr.responseText);
-                
-                // Remove loading indicators
-                removeLoadingIndicator('modelAChat');
-                removeLoadingIndicator('modelBChat');
-               
-                if (xhr.status === 401) {
-                    console.log("Unauthorized - redirecting to login");
-                    // Redirect to login if unauthorized
-                    window.location.href = '/login_page';
-                } else {
-                    // Show error message
-                    addMessage('modelAChat', 'Error: Failed to get response.', 'bot');
-                    addMessage('modelBChat', 'Error: Failed to get response.', 'bot');
-                    console.error('API call failed:', xhr.responseText);
+                // Handle different states
+                if (response.model_a.status === 'pending') {
+                    // Keep loading indicator
+                } else if (response.model_a.response) {
+                    // Remove loading indicator if it exists
+                    removeLoadingIndicator('modelAChat');
+                    
+                    // Check if we need to add or update the message
+                    const existingMessage = $('#modelAChat .bot-message').last();
+                    if (existingMessage.length && existingMessage.hasClass('streaming')) {
+                        // Update existing message
+                        updateModelResponse('modelAChat', response.model_a.response, response.model_a.metrics);
+                    } else {
+                        // Add new message
+                        addModelResponse('modelAChat', response.model_a.response, response.model_a.metrics, true);
+                    }
                 }
             }
-        });
+            
+            // Update model B (if available)
+            if (response.model_b) {
+                // Update model name
+                $('.model-card:last .model-title').text(response.model_b.name);
+                
+                // Handle different states
+                if (response.model_b.status === 'pending') {
+                    // Keep loading indicator
+                } else if (response.model_b.response) {
+                    // Remove loading indicator if it exists
+                    removeLoadingIndicator('modelBChat');
+                    
+                    // Check if we need to add or update the message
+                    const existingMessage = $('#modelBChat .bot-message').last();
+                    if (existingMessage.length && existingMessage.hasClass('streaming')) {
+                        // Update existing message
+                        updateModelResponse('modelBChat', response.model_b.response, response.model_b.metrics);
+                    } else {
+                        // Add new message
+                        addModelResponse('modelBChat', response.model_b.response, response.model_b.metrics, true);
+                    }
+                }
+            }
+            
+            // Close the connection when both models have completed
+            if ((response.model_a.status === 'complete' || response.model_a.status === 'error') && 
+                (response.model_b.status === 'complete' || response.model_b.status === 'error')) {
+                console.log("All models completed, closing event source");
+                eventSource.close();
+                
+                // Update vote counts if available
+                if (response.votes && response.votes.counts) {
+                    updateVoteCounts(response.votes.counts);
+                    highlightUserVote(response.votes.user_vote);
+                }
+            }
+        };
+        
+        // Handle errors
+        eventSource.onerror = function(error) {
+            console.error("EventSource error:", error);
+            eventSource.close();
+            
+            // Remove loading indicators
+            removeLoadingIndicator('modelAChat');
+            removeLoadingIndicator('modelBChat');
+            
+            // Add error messages if no responses were shown
+            if ($('#modelAChat .bot-message').length === 0) {
+                addMessage('modelAChat', 'Error: Failed to get response.', 'bot');
+            }
+            if ($('#modelBChat .bot-message').length === 0) {
+                addMessage('modelBChat', 'Error: Failed to get response.', 'bot');
+            }
+        };
     }
 }
+
+function addMessage(containerId, text, type) {
+    const messageClass = type === 'user' ? 'user-message' : 'bot-message';
+    let messageHtml = `<div class="message ${messageClass}">${text}`;
     
-    function addMessage(containerId, text, type) {
-        const messageClass = type === 'user' ? 'user-message' : 'bot-message';
-        let messageHtml = `<div class="message ${messageClass}">${text}`;
-        
-        // Add copy button for bot messages
-        if (type === 'bot') {
-            messageHtml += `<button class="copy-button" onclick="copyToClipboard(this.parentElement.textContent.trim())">
-                <i class="far fa-copy"></i>
-            </button>`;
-        }
-        
-        messageHtml += `</div>`;
-        
-        $(`#${containerId}`).append(messageHtml);
-        
-        // Scroll to bottom
-        const container = document.getElementById(containerId);
-        container.scrollTop = container.scrollHeight;
+    // Add copy button for bot messages
+    if (type === 'bot') {
+        messageHtml += `<button class="copy-button" onclick="copyToClipboard(this.parentElement.textContent.trim())">
+            <i class="far fa-copy"></i>
+        </button>`;
     }
     
-    function addModelResponse(containerId, text, metrics) {
-        // Create the response container
-        let responseHtml = `<div class="message bot-message">`;
+    messageHtml += `</div>`;
+    
+    $(`#${containerId}`).append(messageHtml);
+    
+    // Scroll to bottom
+    const container = document.getElementById(containerId);
+    container.scrollTop = container.scrollHeight;
+}
+
+function addModelResponse(containerId, text, metrics, isStreaming = false) {
+    // Create the response container with optional streaming class
+    let responseHtml = `<div class="message bot-message ${isStreaming ? 'streaming' : ''}">`;
+    
+    // Add the response text
+    responseHtml += `<div class="response-text">${text}</div>`;
+    
+    // Add metrics if available and not empty
+    if (metrics && Object.keys(metrics).length > 0) {
+        responseHtml += `<div class="metrics-container" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+            <h6 style="color: var(--accent-color);">Quality Metrics:</h6>
+            <ul style="margin-bottom: 0; padding-left: 20px;">`;
         
-        // Add the response text
-        responseHtml += `<div>${text}</div>`;
+        // Add each metric
+        for (const [key, value] of Object.entries(metrics)) {
+            // Format the key as a readable label
+            const label = key.replace(/_/g, ' ')
+                           .replace(/\b\w/g, l => l.toUpperCase());
+            
+            // Format the value based on type
+            let formattedValue = value;
+            if (typeof value === 'number') {
+                formattedValue = value.toFixed(2);
+            }
+            
+            responseHtml += `<li><strong>${label}:</strong> ${formattedValue}</li>`;
+        }
         
-        // Add metrics if available
+        responseHtml += `</ul></div>`;
+    }
+    
+    // Add copy button
+    responseHtml += `<button class="copy-button" onclick="copyToClipboard(this.parentElement.querySelector('.response-text').textContent.trim())">
+        <i class="far fa-copy"></i>
+    </button>`;
+    
+    responseHtml += `</div>`;
+    
+    $(`#${containerId}`).append(responseHtml);
+    
+    // Scroll to bottom
+    const container = document.getElementById(containerId);
+    container.scrollTop = container.scrollHeight;
+}
+
+function updateModelResponse(containerId, text, metrics) {
+    // Find the last bot message in the container
+    const messageElement = $(`#${containerId} .bot-message.streaming`).last();
+    
+    if (messageElement.length) {
+        // Update the text
+        messageElement.find('.response-text').html(text);
+        
+        // Update metrics if available
         if (metrics && Object.keys(metrics).length > 0) {
-            responseHtml += `<div class="metrics-container" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-                <h6 style="color: var(--accent-color);">Evaluation Metrics:</h6>
+            let metricsHtml = `<div class="metrics-container" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                <h6 style="color: var(--accent-color);">Quality Metrics:</h6>
                 <ul style="margin-bottom: 0; padding-left: 20px;">`;
             
             // Add each metric
@@ -706,25 +791,28 @@ $(document).ready(function() {
                     formattedValue = value.toFixed(2);
                 }
                 
-                responseHtml += `<li><strong>${label}:</strong> ${formattedValue}</li>`;
+                metricsHtml += `<li><strong>${label}:</strong> ${formattedValue}</li>`;
             }
             
-            responseHtml += `</ul></div>`;
+            metricsHtml += `</ul></div>`;
+            
+            // Remove existing metrics container if it exists
+            messageElement.find('.metrics-container').remove();
+            
+            // Insert new metrics before copy button
+            $(metricsHtml).insertBefore(messageElement.find('.copy-button'));
         }
         
-        // Add copy button
-        responseHtml += `<button class="copy-button" onclick="copyToClipboard(this.parentElement.querySelector('div').textContent.trim())">
-            <i class="far fa-copy"></i>
-        </button>`;
-        
-        responseHtml += `</div>`;
-        
-        $(`#${containerId}`).append(responseHtml);
+        // Remove streaming class once complete
+        if (Object.keys(metrics).length > 0) {
+            messageElement.removeClass('streaming');
+        }
         
         // Scroll to bottom
         const container = document.getElementById(containerId);
         container.scrollTop = container.scrollHeight;
     }
+}
     
     function addLoadingIndicator(containerId) {
         $(`#${containerId}`).append(`
