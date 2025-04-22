@@ -436,6 +436,10 @@
                             <i class="fas fa-thumbs-up"></i> B is better
                             <span class="vote-count ms-2"></span>
                         </button>
+                        <button class="vote-button vote-tie" id="voteTie">
+                            <i class="fas fa-thumbs-up"></i> tie
+                            <span class="vote-count ms-2"></span>
+                        </button>
                       
                     </div>
                     
@@ -1054,17 +1058,18 @@ function castVote(voteType) {
             showToast('Vote recorded!');
             
             // Show ELO changes
-            if (data.model_ratings) {
-                const modelA = data.model_ratings.eBrevia;
-                const modelB = data.model_ratings["Equally.ai"];
-                console.log(`ELO Ratings - eBrevia: ${modelA.rating.toFixed(1)}, Equally.ai: ${modelB.rating.toFixed(1)}`);
-                
-                // Update ELO displays if they exist
-                const eloA = document.getElementById('eloA');
-                const eloB = document.getElementById('eloB');
-                if (eloA) eloA.textContent = modelA.rating.toFixed(1);
-                if (eloB) eloB.textContent = modelB.rating.toFixed(1);
-            }
+          // Show ELO changes
+if (data.model_ratings) {
+    const modelA = data.model_ratings.eBrevia;
+    const modelB = data.model_ratings["Equally.ai"];
+    console.log(`ELO Ratings - eBrevia: ${modelA.elo_rating.toFixed(1)}, Equally.ai: ${modelB.elo_rating.toFixed(1)}`);
+    
+    // Update ELO displays if they exist
+    const eloA = document.getElementById('eloA');
+    const eloB = document.getElementById('eloB');
+    if (eloA) eloA.textContent = modelA.elo_rating.toFixed(1);
+    if (eloB) eloB.textContent = modelB.elo_rating.toFixed(1);
+}
         }
     })
     .catch(error => {

@@ -1,6 +1,7 @@
 from urllib.parse import unquote
 from http.client import HTTPException
 import os
+import math
 import logging
 import pandas as pd
 from flask import Flask, Response, json, jsonify, redirect, url_for, session, request, render_template, url_for,  flash
@@ -211,9 +212,12 @@ def call_dify_workflow(question, model_answer, prev_model_answer=None, model_nam
             # Log actual response for debugging if there's an error
             if response.status_code != 200:
                 logger.warning(f"Dify API error response: {response.text}")
-            
+            else:
+                # Log the complete response structure for debugging
+                logger.debug(f"Dify API complete response: {response.json()}")
             response.raise_for_status()
             result = response.json().get("data", {}).get("outputs", {})
+            logger.debug(f"Dify API parsed outputs: {result}") 
             logger.debug(f"Dify API response received successfully on attempt {attempt+1}")
             return result
         except requests.exceptions.RequestException as e:
@@ -248,19 +252,39 @@ def clean_response(text):
     return cleaned
 
 def parse_evaluation_metrics(evaluation):
-    """Parse evaluation results with better error handling and defaults"""
-    if not evaluation or "evaluation_results" not in evaluation:
-        logger.warning("Missing evaluation results")
+    """Parse evaluation results with better error handling and different possible formats"""
+    if not evaluation:
+        logger.warning("Empty evaluation response")
         return {"accuracy": 0, "completeness": 0, "helpfulness": 0, "clarity": 0, "comparison": 0}
     
-    try:
-        return json.loads(evaluation["evaluation_results"])
-    except Exception as e:
-        logger.error(f"Error parsing evaluation results: {e}")
-        # Return default metrics
-        return {"accuracy": 0, "completeness": 0, "helpfulness": 0, "clarity": 0, "comparison": 0}
-
-
+    # Log the actual structure received
+    logger.debug(f"Evaluation structure received: {evaluation}")
+    
+    # Try different possible locations for the metrics
+    if "evaluation_results" in evaluation:
+        try:
+            return json.loads(evaluation["evaluation_results"])
+        except Exception as e:
+            logger.error(f"Error parsing evaluation_results: {e}")
+    
+    # Try if metrics are directly in the response
+    metrics_keys = ["accuracy", "completeness", "helpfulness", "clarity", "comparison"]
+    direct_metrics = {k: evaluation.get(k, 0) for k in metrics_keys if k in evaluation}
+    if direct_metrics and len(direct_metrics) == len(metrics_keys):
+        return direct_metrics
+    
+    # Check other possible keys
+    for key in evaluation:
+        if isinstance(evaluation[key], str):
+            try:
+                parsed = json.loads(evaluation[key])
+                if isinstance(parsed, dict) and any(k in parsed for k in metrics_keys):
+                    return {k: parsed.get(k, 0) for k in metrics_keys}
+            except:
+                pass
+    
+    logger.warning("Could not find evaluation metrics in response")
+    return {"accuracy": 0, "completeness": 0, "helpfulness": 0, "clarity": 0, "comparison": 0}
 def get_previous_model_response(question, model_type):
     """Get previous response for a model if it exists"""
     collection = llama_responses_collection if model_type == "llama" else deepseek_responses_collection
@@ -570,6 +594,85 @@ def logout():
     session.clear()
     return redirect(url_for("home"))
 
+def check_question_legality(question):
+    """
+    Use Together AI API with Llama-3.3-70B-Instruct-Turbo-Free to determine if a question is legal
+    
+    Parameters:
+    - question: The question text to check
+    
+    Returns:
+    - Boolean: True if legal, False if illegal
+    """
+    try:
+        import requests
+        import os
+        import json
+        
+        # Together AI API configuration
+        TOGETHER_API_KEY = os.environ.get("TOGETHER_API_KEY")  # Make sure this is in your environment variables
+        TOGETHER_API_URL = "https://api.together.xyz/v1/completions"
+        LLAMA_MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
+        
+        # Headers for API request
+        headers = {
+            "Authorization": f"Bearer {TOGETHER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        # Create a prompt for the legality check
+        prompt = f"""<|begin_of_text|><|system|>
+You are a helpful AI assistant. Your task is to determine if the following question is legal and appropriate to answer.
+
+A question is ILLEGAL if it:
+1. Asks for instructions on illegal activities (hacking, fraud, etc.)
+2. Requests information on creating weapons, drugs, or dangerous items
+3. Seeks advice on how to harm others or oneself 
+4. Contains hate speech or promotes discrimination
+5. Asks for private/personal information about specific individuals
+6. Explicitly requests content that would be illegal in most jurisdictions
+
+Analyze the question carefully and respond with EXACTLY one word, either "LEGAL" or "ILLEGAL".
+<|user|>
+Question: "{question}"
+
+Is this question legal and appropriate to answer? Answer with only LEGAL or ILLEGAL.
+<|assistant|>
+"""
+        
+        # Payload for API request
+        payload = {
+            "model": LLAMA_MODEL,
+            "prompt": prompt,
+            "max_tokens": 10,
+            "temperature": 0.1,
+            "top_p": 0.9,
+            "stop": ["<|user|>", "<|system|>", "<|end_of_text|>"]
+        }
+        
+        # Make API request
+        response = requests.post(TOGETHER_API_URL, headers=headers, json=payload)
+        result = response.json()
+        
+        # Extract the generated text from response
+        generated_text = result.get("choices", [{}])[0].get("text", "").strip().upper()
+        
+        # Determine if response indicates the question is legal
+        is_legal = "LEGAL" in generated_text and "ILLEGAL" not in generated_text
+        
+        logger.info(f"Question legality check (Together AI): '{question}' -> {is_legal}")
+        logger.debug(f"Raw model response: {generated_text}")
+        
+        return is_legal
+        
+    except Exception as e:
+        logger.error(f"Error checking question legality with Together AI: {e}")
+        # Log the detailed error for debugging
+        import traceback
+        logger.error(traceback.format_exc())
+        # Default to allowing it if the legal check fails
+        return True
+
 
 @app.route("/query-models", methods=["POST", "GET"])
 def query_models():
@@ -578,14 +681,14 @@ def query_models():
     if "user" not in session:
         print("ERROR: User not logged in")
         return jsonify({"error": "User not logged in"}), 401
-    
+   
     # Handle GET request for EventSource
     if request.method == "GET":
         question = request.args.get("question")
     else:  # POST request
         data = request.json
         question = data.get("question")
-        
+       
     print(f"Question received: {question}")
    
     if not question:
@@ -594,9 +697,17 @@ def query_models():
    
     logger.info(f"Processing question: {question}")
     
+    # Check question legality
+    is_legal = check_question_legality(question)
+    if not is_legal:
+        logger.warning(f"Illegal question detected and flagged: {question}")
+        # We'll still process the question but mark it as flagged
+        # This allows admins to review it but prevents rating impacts
+   
     # Create response object that will be updated as models complete
     response_data = {
         "question": question,
+        "is_legal": is_legal,  # Add flag for legal status
         "model_a": {
             "name": "eBrevia",
             "response": "",
@@ -619,7 +730,7 @@ def query_models():
             "user_vote": None
         }
     }
-    
+   
     # Get existing vote counts for this question
     vote_counts = {
         "a": votes_collection.count_documents({"question": question, "vote_type": "a"}),
@@ -627,20 +738,20 @@ def query_models():
         "tie": votes_collection.count_documents({"question": question, "vote_type": "tie"}),
         "bad": votes_collection.count_documents({"question": question, "vote_type": "bad"})
     }
-    
+   
     # Check if user has already voted
     user_id = session["user"].get("id") or session["user"]["email"]
     user_vote = votes_collection.find_one({
         "question": question,
         "user_id": user_id
     })
-    
+   
     response_data["votes"]["counts"] = vote_counts
     response_data["votes"]["user_vote"] = user_vote["vote_type"] if user_vote else None
-    
+   
     # Extract user info from session before passing to generator
     user_email = session["user"]["email"]
-    
+   
     # This will enable us to stream the response
     return Response(
         stream_model_responses(question, response_data, user_email),
@@ -1005,6 +1116,94 @@ def create_feedback():
             "message": "Failed to store feedback. Please try again later."
         }), 500
 
+
+def calculate_custom_rating(votes, current_rating=500, model_name=None):
+    """
+    Calculate custom rating based on unique voters with diminishing returns
+   
+    Parameters:
+    - votes: List of all vote documents
+    - current_rating: Current rating of the model
+    - model_name: Name of the model ("eBrevia" or "Equally.ai")
+   
+    Returns:
+    - New custom rating value
+    """
+    # Group votes by user to apply diminishing returns
+    user_votes = {}
+    for vote in votes:
+        user_id = vote["user_id"]
+        if user_id not in user_votes:
+            user_votes[user_id] = []
+        user_votes[user_id].append(vote)
+   
+    # Calculate vote weight for each user based on their number of votes
+    user_weights = {}
+    for user_id, user_vote_list in user_votes.items():
+        # Diminishing returns formula: weight = 1 / sqrt(vote_count)
+        vote_count = len(user_vote_list)
+        user_weights[user_id] = 1 / math.sqrt(vote_count)
+   
+    # Calculate total score for this model
+    total_score = 0
+   
+    for vote in votes:
+        user_id = vote["user_id"]
+        weight = user_weights[user_id]
+        vote_type = vote["vote_type"]
+        
+        # Model-specific scoring
+        if model_name == "eBrevia":  # Model A
+            if vote_type == "a":  # Win for model A
+                total_score += weight
+            elif vote_type == "b":  # Loss for model A
+                total_score -= weight
+        elif model_name == "Equally.ai":  # Model B
+            if vote_type == "b":  # Win for model B
+                total_score += weight
+            elif vote_type == "a":  # Loss for model B
+                total_score -= weight
+        # Ties don't affect the score
+   
+    # Calculate rating change (multiplier can be adjusted)
+    rating_change = total_score * 10
+   
+    # Apply the change to current rating
+    new_rating = current_rating + rating_change
+   
+    # Ensure rating stays within reasonable bounds
+    return max(0, min(1000, new_rating))
+
+
+# Update the MongoDB schema to include custom rating
+def initialize_ratings():
+    """Initialize both ELO and custom ratings for models if they don't exist"""
+    models = ["eBrevia", "Equally.ai"]
+    default_elo = 1500  # Standard starting ELO
+    default_custom = 500  # Starting custom rating
+    
+    for model in models:
+        existing = elo_ratings_collection.find_one({"model_name": model})
+        if not existing:
+            elo_ratings_collection.insert_one({
+                "model_name": model,
+                "elo_rating": default_elo,
+                "custom_rating": default_custom,
+                "wins": 0,
+                "losses": 0,
+                "ties": 0,
+                "total_matches": 0,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            })
+            logger.info(f"Initialized ratings for {model}")
+        elif "custom_rating" not in existing:
+            # Update existing models to include custom rating
+            elo_ratings_collection.update_one(
+                {"model_name": model},
+                {"$set": {"custom_rating": default_custom}}
+            )
+            logger.info(f"Added custom rating to existing model {model}")
 def initialize_elo_ratings():
     """Initialize ELO ratings for models if they don't exist"""
     models = ["eBrevia", "Equally.ai"]
@@ -1061,11 +1260,10 @@ def leaderboard():
     return render_template('leaderboard.html', user=user)
 @app.route("/cast-vote", methods=["POST"])
 def cast_vote():
-    """Endpoint to cast a vote between models and update ELO ratings"""
+    """Endpoint to cast a vote between models and update both ELO and custom ratings"""
     if "user" not in session:
         return jsonify({"error": "User not logged in"}), 401
     
-    # Log that the endpoint was hit
     logger.info("Cast vote endpoint hit")
     
     data = request.json
@@ -1099,19 +1297,29 @@ def cast_vote():
             "previous_vote": existing_vote["vote_type"]
         }), 409
     
-    # Get current ELO ratings
+    # Check question legality first
+    is_legal = check_question_legality(question)
+    if not is_legal and vote_type != "bad":
+        logger.warning(f"Illegal question detected: {question}")
+        return jsonify({
+            "error": "This question has been flagged as potentially illegal or inappropriate"
+        }), 400
+    
+    # Get current ratings
     model_a_data = elo_ratings_collection.find_one({"model_name": "eBrevia"})
     model_b_data = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
     
     if not model_a_data or not model_b_data:
-        initialize_elo_ratings()
+        initialize_ratings()
         model_a_data = elo_ratings_collection.find_one({"model_name": "eBrevia"})
         model_b_data = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
     
-    rating_a = model_a_data["elo_rating"]
-    rating_b = model_b_data["elo_rating"]
+    rating_a_elo = model_a_data["elo_rating"]
+    rating_b_elo = model_b_data["elo_rating"]
+    rating_a_custom = model_a_data.get("custom_rating", 500)
+    rating_b_custom = model_b_data.get("custom_rating", 500)
     
-    # Process vote and update ELO ratings
+    # Process vote and update ratings
     timestamp = datetime.utcnow()
     
     # Create vote record
@@ -1124,7 +1332,7 @@ def cast_vote():
     }
     
     # Update model stats based on vote type
-    if vote_type != "bad":  # Only update ELO for non-"bad" votes
+    if vote_type != "bad":  # Only update ratings for non-"bad" votes
         wins_a = model_a_data["wins"]
         losses_a = model_a_data["losses"]
         ties_a = model_a_data["ties"]
@@ -1135,30 +1343,73 @@ def cast_vote():
         ties_b = model_b_data["ties"]
         total_b = model_b_data["total_matches"]
         
+        # Update ELO ratings
         if vote_type == "a":
             # Model A wins, B loses
             outcome_a = 1.0
-            new_rating_a, new_rating_b = calculate_elo(rating_a, rating_b, outcome_a)
+            new_rating_a_elo, new_rating_b_elo = calculate_elo(rating_a_elo, rating_b_elo, outcome_a)
             wins_a += 1
             losses_b += 1
         elif vote_type == "b":
             # Model B wins, A loses
             outcome_a = 0.0
-            new_rating_a, new_rating_b = calculate_elo(rating_a, rating_b, outcome_a)
+            new_rating_a_elo, new_rating_b_elo = calculate_elo(rating_a_elo, rating_b_elo, outcome_a)
             losses_a += 1
             wins_b += 1
         elif vote_type == "tie":
             # Tie
             outcome_a = 0.5
-            new_rating_a, new_rating_b = calculate_elo(rating_a, rating_b, outcome_a)
+            new_rating_a_elo, new_rating_b_elo = calculate_elo(rating_a_elo, rating_b_elo, outcome_a)
             ties_a += 1
             ties_b += 1
         
-        # Update ELO ratings in database
+        # Get previous votes for both models
+        previous_votes = list(votes_collection.find({
+            "vote_type": {"$in": ["a", "b", "tie"]},
+            "question": {"$ne": question}  # Exclude current vote as it's not saved yet
+        }))
+        
+        # Create model-specific vote lists
+        model_a_votes = []
+        model_b_votes = []
+        
+        # Process previous votes for each model's perspective
+        for vote in previous_votes:
+            # For model A: "a"=win, "b"=loss, "tie"=tie
+            model_a_votes.append(vote.copy())
+            
+            # For model B: "b"=win, "a"=loss, "tie"=tie
+            model_b_vote = vote.copy()
+            if vote["vote_type"] == "a":
+                model_b_vote["vote_type"] = "b"  # Loss for model B
+            elif vote["vote_type"] == "b":
+                model_b_vote["vote_type"] = "a"  # Win for model B
+            model_b_votes.append(model_b_vote)
+        
+        # Add current vote to both models' vote lists with correct perspective
+        current_vote_a = vote_doc.copy()
+        current_vote_b = vote_doc.copy()
+        
+        # For model B, flip "a" and "b" vote types to represent wins/losses correctly
+        if current_vote_b["vote_type"] == "a":
+            current_vote_b["vote_type"] = "b"  # Loss for model B
+        elif current_vote_b["vote_type"] == "b":
+            current_vote_b["vote_type"] = "a"  # Win for model B
+        
+        model_a_votes.append(current_vote_a)
+        model_b_votes.append(current_vote_b)
+        all_votes = previous_votes + [vote_doc]
+        # Calculate custom ratings
+        # Don't flip votes; instead pass the model name to the calculation function
+        new_rating_a_custom = calculate_custom_rating(all_votes, rating_a_custom, "eBrevia")
+        new_rating_b_custom = calculate_custom_rating(all_votes, rating_b_custom, "Equally.ai")
+        
+        # Update ratings in database
         elo_ratings_collection.update_one(
             {"model_name": "eBrevia"},
             {"$set": {
-                "elo_rating": new_rating_a,
+                "elo_rating": new_rating_a_elo,
+                "custom_rating": new_rating_a_custom,
                 "wins": wins_a,
                 "losses": losses_a,
                 "ties": ties_a,
@@ -1170,7 +1421,8 @@ def cast_vote():
         elo_ratings_collection.update_one(
             {"model_name": "Equally.ai"},
             {"$set": {
-                "elo_rating": new_rating_b,
+                "elo_rating": new_rating_b_elo,
+                "custom_rating": new_rating_b_custom,
                 "wins": wins_b,
                 "losses": losses_b,
                 "ties": ties_b,
@@ -1203,22 +1455,26 @@ def cast_vote():
         "vote_counts": vote_counts,
         "model_ratings": {
             "eBrevia": {
-                "rating": model_a_updated["elo_rating"],
+                "elo_rating": model_a_updated["elo_rating"],
+                "custom_rating": model_a_updated.get("custom_rating", 500),
                 "wins": model_a_updated["wins"],
                 "losses": model_a_updated["losses"],
                 "ties": model_a_updated["ties"]
             },
             "Equally.ai": {
-                "rating": model_b_updated["elo_rating"],
+                "elo_rating": model_b_updated["elo_rating"],
+                "custom_rating": model_b_updated.get("custom_rating", 500),
                 "wins": model_b_updated["wins"],
                 "losses": model_b_updated["losses"],
                 "ties": model_b_updated["ties"]
             }
         }
     })
+
+# Update endpoint to get model ratings to include custom ratings
 @app.route("/get-model-ratings", methods=["GET"])
 def get_model_ratings():
-    """Endpoint to get current ELO ratings for all models"""
+    """Endpoint to get current ELO and custom ratings for all models"""
     if "user" not in session:
         return jsonify({"error": "User not logged in"}), 401
     
@@ -1227,11 +1483,17 @@ def get_model_ratings():
         "_id": 0,
         "model_name": 1,
         "elo_rating": 1,
+        "custom_rating": 1,
         "wins": 1,
         "losses": 1,
         "ties": 1,
         "total_matches": 1
     }))
+    
+    # Ensure custom_rating exists for all models
+    for model in ratings:
+        if "custom_rating" not in model:
+            model["custom_rating"] = 500
     
     return jsonify({
         "ratings": ratings
