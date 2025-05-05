@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal AI Arena</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        header {
+            background-color: #2a5298;
+            color: #FFFFFF;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .main-content {
+            display: flex;
+            margin: 30px 0;
+        }
+        .sidebar {
+            width: 25%;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-right: 20px;
+        }
+        .content-area {
+            width: 75%;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #2a5298;
+            margin-top: 0;
+            font-size: 32px;
+            border-bottom: 2px solid #ffc107;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2a5298;
+            font-size: 24px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            color: #e63946;
+            font-size: 20px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .feature-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #2a5298;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+        .feature-title {
+            color: #2a5298;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .rating-info {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .parameter-container {
+            margin-bottom: 30px;
+        }
+        .parameter-group {
+            margin-bottom: 20px;
+        }
+        .parameter {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .parameter-name {
+            font-weight: bold;
+        }
+        .parameter-weight {
+            color: #e63946;
+            font-weight: bold;
+        }
+        .formula {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .nav-item {
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            color: #212529;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        .nav-item:hover, .nav-item.active {
+            background-color: #2a5298;
+            color: #FFFFFF;
+        }
+        .accent-text {
+            color: #ffc107;
+        }
+        .secondary-text {
+            color: #e63946;
+        }
+        .highlight-box {
+            border: 1px solid #ffc107;
+            background-color: rgba(255, 193, 7, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo"><a href="/" style="text-decoration: none; color: #212529;">Legal<span style="color: #ffc107;">AI</span><span style="color: #212529;">Arena</span></a></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="sidebar">
+                <h3 style="margin-top: 0; color: #212529;">Navigation</h3>
+                <a href="#overview" class="nav-item active">Overview</a>
+                <a href="#arena-workflow" class="nav-item">Arena Workflow</a>
+                <a href="#leaderboard" class="nav-item">Leaderboard</a>
+                <a href="#evaluation" class="nav-item">Evaluation Criteria</a>
+                <a href="#rating-systems" class="nav-item">Rating Systems</a>
+                <a href="#elo-system" class="nav-item">ELO Rating System</a>
+                <a href="#custom-system" class="nav-item">Custom Rating System</a>
+                <a href="#conclusion" class="nav-item">Conclusion</a>
+            </div>
+            
+            <div class="content-area">
+                <h1>Legal AI Arena</h1>
+                
+                <section id="overview">
+                    <h2>Bit Arena Functionality</h2>
+                    <h3>Overview</h3>
+                    <p>The Arena is a head-to-head comparison space where users can:</p>
+                    <ul>
+                        <li>Select Tools (e.g., Legal Research, Contract Review, Document Summarization)</li>
+                        <li>Generate AI Responses from different models to a specific legal task</li>
+                        <li>Vote for the better model after comparison</li>
+                    </ul>
+                </section>
+                
+                <section id="arena-workflow">
+                    <h3>Arena Workflow</h3>
+                    <div class="feature-card">
+                        <div class="feature-title">Tool Selection</div>
+                        <p>User picks a legal task category</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-title">Prompt Input</div>
+                        <p>User enters or selects a sample legal question</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-title">Response Generation</div>
+                        <p>Two randomly or manually selected models produce outputs</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-title">Voting</div>
+                        <ul>
+                            <li>Users vote anonymously or while logged in</li>
+                            <li>Vote updates both ELO and Custom ratings</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-title">Immediate Feedback</div>
+                        <ul>
+                            <li>Rating deltas shown after vote</li>
+                            <li>Breakdown of votes and model history available on request</li>
+                        </ul>
+                    </div>
+                </section>
+                
+                <section id="leaderboard">
+                    <h2>Leaderboard Functionality</h2>
+                    <h3>Purpose</h3>
+                    <p>The Leaderboard ranks all AI models using both ELO and Custom Ratings, offering two perspectives on model performance:</p>
+                    <ul>
+                        <li><strong>ELO Rank:</strong> Based on competitive match outcomes</li>
+                        <li><strong>Custom Rank:</strong> Based on community sentiment and voting trends</li>
+                    </ul>
+                    
+                    <h3>Features</h3>
+                    <ul>
+                        <li><strong>Dual Tabs/Columns:</strong> Users can toggle between ELO and Custom scores</li>
+                        <li>
+                            <strong>Model Cards:</strong> Each leaderboard entry includes:
+                            <ul>
+                                <li>Model name</li>
+                                <li>Current ELO and Custom rating</li>
+                                <li>Win/Loss statistics</li>
+                                <li>Performance trend (visual indicators)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+                
+                <section id="evaluation">
+                    <h2>Evaluation Criteria</h2>
+                    <p>Our evaluation framework assesses AI models on five key parameters with weighted importance:</p>
+                    
+                    <div class="parameter-container">
+                        <div class="parameter-group">
+                            <h3>Primary Parameters (70% Total Weight)</h3>
+                            
+                            <div class="parameter">
+                                <div class="parameter-name">Task Performance</div>
+                                <div class="parameter-weight">35%</div>
+                            </div>
+                            <ul>
+                                <li>Effectiveness in summarizing or analyzing contracts and cases on legal benchmarks</li>
+                                <li>Scored 0-5, where 5 represents exceptional performance on standardized legal tasks</li>
+                                <li>Measures practical utility in real legal workflows</li>
+                            </ul>
+                            
+                            <div class="parameter">
+                                <div class="parameter-name">User Preference Ranking</div>
+                                <div class="parameter-weight">35%</div>
+                            </div>
+                            <ul>
+                                <li>Overall usefulness and satisfaction ratings from legal professionals</li>
+                                <li>Scored 0-5, where 5 represents highest satisfaction and preference</li>
+                                <li>Captures qualitative feedback from practicing attorneys and legal staff</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <h3>Secondary Parameters (30% Total Weight)</h3>
+                            
+                            <div class="parameter">
+                                <div class="parameter-name">Legal Reasoning Accuracy</div>
+                                <div class="parameter-weight">10%</div>
+                            </div>
+                            <ul>
+                                <li>Ability to correctly interpret laws, statutes, and case precedents</li>
+                                <li>Scored 0-5, where 5 represents flawless legal interpretation</li>
+                                <li>Evaluates the model's grasp of legal principles and reasoning</li>
+                            </ul>
+                            
+                            <div class="parameter">
+                                <div class="parameter-name">Citation Reliability</div>
+                                <div class="parameter-weight">10%</div>
+                            </div>
+                            <ul>
+                                <li>Precision and accuracy of legal references and citations</li>
+                                <li>Scored 0-5, where 5 represents perfect citation accuracy</li>
+                                <li>Measures the trustworthiness of referenced legal materials</li>
+                            </ul>
+                            
+                            <div class="parameter">
+                                <div class="parameter-name">Hallucination Rate</div>
+                                <div class="parameter-weight">10%</div>
+                            </div>
+                            <ul>
+                                <li>Frequency of introducing false or misleading information</li>
+                                <li>Scored 0-5, where 5 represents zero hallucinations</li>
+                                <li>Inverse scale where lower hallucination rates receive higher scores</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <p class="highlight-box">This balanced approach ensures that practical utility and user satisfaction (70% combined) are prioritized while maintaining essential standards for accuracy and reliability (30% combined).</p>
+                </section>
+                
+                <section id="rating-systems">
+                    <h2>ELO and Custom Rating Calculation</h2>
+                    <p>Our system implements two separate rating mechanisms to evaluate the performance of our AI models:</p>
+                    <ul>
+                        <li><strong>ELO Rating System:</strong> A traditional chess rating system that measures relative skill levels between models</li>
+                        <li><strong>Custom Rating System:</strong> A unique rating system accounting for user vote patterns with diminishing returns</li>
+                    </ul>
+                    <p>This document explains the methodology and implementation of both systems.</p>
+                </section>
+                
+                <section id="elo-system">
+                    <h3>ELO Rating System</h3>
+                    <h4 style="color: #2a5298; margin-top: 15px;">Implementation Details</h4>
+                    <ul>
+                        <li><strong>Starting Rating:</strong> All models begin with a default ELO rating of 1500</li>
+                        <li><strong>K-Factor:</strong> We use a K-factor of 32, which determines how drastically ratings change after each match</li>
+                        <li>
+                            <strong>Outcome Values:</strong>
+                            <ul>
+                                <li>Win = 1.0</li>
+                                <li>Tie = 0.5</li>
+                                <li>Loss = 0.0</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <h4 style="color: #2a5298; margin-top: 15px;">Calculation Formula</h4>
+                    <p>When a user votes on a comparison between Model A and Model B:</p>
+                    <p>We calculate the expected outcome for each model using the formula:</p>
+                    
+                    <div class="formula">
+                        Expected_A = 1 / (1 + 10^((Rating_B - Rating_A) / 400))<br>
+                        Expected_B = 1 - Expected_A
+                    </div>
+                    
+                    <p>We then calculate the new ratings using:</p>
+                    
+                    <div class="formula">
+                        New_Rating_A = Rating_A + K * (Actual_Outcome_A - Expected_A)<br>
+                        New_Rating_B = Rating_B + K * (Actual_Outcome_B - Expected_B)
+                    </div>
+                    
+                    <div class="rating-info">
+                        <p><strong>Example:</strong> If Model A (rating 1500) wins against Model B (rating 1500):</p>
+                        <ul>
+                            <li>Expected_A = 0.5 (50% chance of winning)</li>
+                            <li>Actual_Outcome_A = 1 (win)</li>
+                            <li>New_Rating_A = 1500 + 32 * (1 - 0.5) = 1516</li>
+                            <li>New_Rating_B = 1500 + 32 * (0 - 0.5) = 1484</li>
+                        </ul>
+                    </div>
+                </section>
+                
+                <section id="custom-system">
+                    <h3>Custom Rating System</h3>
+                    <h4 style="color: #2a5298; margin-top: 15px;">Background</h4>
+                    <p>Our custom rating system was designed to address specific requirements:</p>
+                    <ul>
+                        <li>Account for unique voter contributions</li>
+                        <li>Apply diminishing returns for frequent voters</li>
+                        <li>Provide a separate performance metric from ELO</li>
+                    </ul>
+                    
+                    <h4 style="color: #2a5298; margin-top: 15px;">Implementation Details</h4>
+                    <ul>
+                        <li><strong>Starting Rating:</strong> All models begin with a default custom rating of 500</li>
+                        <li><strong>Rating Range:</strong> Constrained between 0-1000</li>
+                        <li><strong>Vote Weight:</strong> Determined by the number of votes a user has cast using diminishing returns</li>
+                        <li><strong>Score Multiplier:</strong> Rating changes are amplified by a factor of 10</li>
+                    </ul>
+                    
+                    <h4 style="color: #2a5298; margin-top: 15px;">Key Features</h4>
+                    <div class="feature-card">
+                        <div class="feature-title">Diminishing Returns per Voter</div>
+                        <ul>
+                            <li>First vote from a user has full weight (1.0)</li>
+                            <li>Additional votes from the same user have progressively less impact:
+                                <ul>
+                                    <li>Second vote: 0.71 weight (1/√2)</li>
+                                    <li>Third vote: 0.58 weight (1/√3)</li>
+                                    <li>And so on...</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-title">Model-Specific Interpretation</div>
+                        <ul>
+                            <li>For Model A (eBrevia):
+                                <ul>
+                                    <li>Vote type "a" (win for A) adds to score</li>
+                                    <li>Vote type "b" (loss for A) subtracts from score</li>
+                                </ul>
+                            </li>
+                            <li>For Model B (Equally.ai):
+                                <ul>
+                                    <li>Vote type "b" (win for B) adds to score</li>
+                                    <li>Vote type "a" (loss for B) subtracts from score</li>
+                                </ul>
+                            </li>
+                            <li>Tie votes do not affect the score</li>
+                        </ul>
+                    </div>
+                    
+                    <h4 style="color: #2a5298; margin-top: 15px;">Calculation Process</h4>
+                    <ol>
+                        <li>Group all votes by user ID to determine how many votes each user has cast</li>
+                        <li>Calculate weight for each user based on their total vote count: weight = 1/√(vote_count)</li>
+                        <li>For each vote:
+                            <ul>
+                                <li>Determine if it's positive or negative for the specific model</li>
+                                <li>Apply the appropriate user's weight to the score</li>
+                            </ul>
+                        </li>
+                        <li>Calculate total score change: rating_change = total_score * 10</li>
+                        <li>Apply change to current rating: new_rating = current_rating + rating_change</li>
+                        <li>Ensure rating stays within bounds: max(0, min(1000, new_rating))</li>
+                    </ol>
+                </section>
+                
+                <section id="conclusion">
+                    <h2>Conclusion</h2>
+                    <p>This comprehensive evaluation system provides multiple perspectives on model performance:</p>
+                    <ul>
+                        <li><strong>Evaluation Criteria</strong> offer detailed assessment across five critical legal AI parameters</li>
+                        <li><strong>ELO</strong> offers a zero-sum, relative comparison between models</li>
+                        <li><strong>Custom rating</strong> provides a nuanced view that accounts for voter behavior and patterns</li>
+                    </ul>
+                    <p class="highlight-box">The combination of these systems ensures a thorough evaluation of our AI models that resists manipulation and provides clear performance metrics for stakeholders, with appropriate emphasis on practical utility and user satisfaction while maintaining standards for accuracy and reliability.</p>
+                </section>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

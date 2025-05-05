@@ -1035,6 +1035,15 @@ def vendor_onboarding():
     # Pass categories to the template
     return render_template('vendor_onboarding.html', categories=TOOL_CATEGORIES)
 
+@app.route('/documentation')
+def documentation():
+    # Check if user is logged in, redirect to login if not
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    # Pass categories to the template
+    return render_template('doc.html')
+
 @app.route('/api/submit-tool', methods=['POST'])
 def submit_tool():
     try:
