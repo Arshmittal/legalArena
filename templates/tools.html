@@ -1007,15 +1007,14 @@ function updateVoteCounts(counts, userVoteType = null) {
 function castVote(voteType) {
     if (!currentQuestion) {
         console.error('No current question set');
-        showToast('Error: No question to vote on');
         return;
     }
-    
+   
     // Temporarily disable all buttons during API call
     Object.values(voteButtons).forEach(btn => {
         if (btn) btn.disabled = true;
     });
-    
+   
     // Simple API call without any special flags
     fetch('/cast-vote', {
         method: 'POST',
@@ -1031,20 +1030,19 @@ function castVote(voteType) {
     })
     .then(response => {
         console.log('Got response:', response.status, response.statusText);
-        
+       
         if (response.status === 401) {
-            showToast('You must be logged in to vote');
             throw new Error('User not logged in');
         } else if (response.status === 409) {
             // If already voted, just update the UI to reflect this new vote
             // and let the user know what happened
             if (hasVoted && userVote !== voteType) {
                 showToast('Changing your vote...');
-                
+               
                 // Update our local state
                 hasVoted = true;
                 userVote = voteType;
-                
+               
                 // Update the UI to reflect the new selection
                 Object.values(voteButtons).forEach(btn => {
                     if (btn) btn.classList.remove('active');
@@ -1052,7 +1050,7 @@ function castVote(voteType) {
                 if (voteButtons[voteType]) {
                     voteButtons[voteType].classList.add('active');
                 }
-                
+               
                 // Try to fetch latest vote counts
                 getVoteCounts();
             } else {
@@ -1073,25 +1071,24 @@ function castVote(voteType) {
             console.log('Vote response data:', data);
             updateVoteCounts(data.vote_counts, voteType);
             showToast('Vote recorded!');
-            
+           
             // Show ELO changes
-          // Show ELO changes
-if (data.model_ratings) {
-    const modelA = data.model_ratings.eBrevia;
-    const modelB = data.model_ratings["Equally.ai"];
-    console.log(`ELO Ratings - eBrevia: ${modelA.elo_rating.toFixed(1)}, Equally.ai: ${modelB.elo_rating.toFixed(1)}`);
-    
-    // Update ELO displays if they exist
-    const eloA = document.getElementById('eloA');
-    const eloB = document.getElementById('eloB');
-    if (eloA) eloA.textContent = modelA.elo_rating.toFixed(1);
-    if (eloB) eloB.textContent = modelB.elo_rating.toFixed(1);
-}
+            if (data.model_ratings) {
+                const modelA = data.model_ratings.eBrevia;
+                const modelB = data.model_ratings["Tool B"];
+                console.log(`ELO Ratings -Tool A: ${modelA.elo_rating.toFixed(1)}, Tool B: ${modelB.elo_rating.toFixed(1)}`);
+               
+                // Update ELO displays if they exist
+                const eloA = document.getElementById('eloA');
+                const eloB = document.getElementById('eloB');
+                if (eloA) eloA.textContent = modelA.elo_rating.toFixed(1);
+                if (eloB) eloB.textContent = modelB.elo_rating.toFixed(1);
+            }
         }
     })
     .catch(error => {
         console.error('Error casting vote:', error);
-        showToast('Error casting vote. Please try again.');
+        // Removed toast notification for errors
     })
     .finally(() => {
         // Always re-enable all buttons when done
@@ -1099,19 +1096,19 @@ if (data.model_ratings) {
             if (btn) btn.disabled = false;
         });
     });
-} 
-    // Add click handlers for vote buttons with error handling
-    Object.entries(voteButtons).forEach(([type, btn]) => {
-        if (btn) {
-            console.log(`Setting up click handler for ${type} button`);
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log(`${type} button clicked`);
-                castVote(type);
-            });
-        }
-    });
-    
+}
+
+// Add click handlers for vote buttons with error handling
+Object.entries(voteButtons).forEach(([type, btn]) => {
+    if (btn) {
+        console.log(`Setting up click handler for ${type} button`);
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log(`${type} button clicked`);
+            castVote(type);
+        });
+    }
+});
     // Function to get vote counts for current question
     function getVoteCounts() {
     if (!currentQuestion) {
@@ -1266,7 +1263,7 @@ if (data.model_ratings) {
             .then(response => response.json())
             .then(data => {
                 const modelA = data.ratings.find(m => m.model_name === 'eBrevia');
-                const modelB = data.ratings.find(m => m.model_name === 'Equally.ai');
+                const modelB = data.ratings.find(m => m.model_name === 'Tool B');
                 
                 if (modelA) {
                     document.getElementById('eloA').textContent = modelA.elo_rating.toFixed(1);

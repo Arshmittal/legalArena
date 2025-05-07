@@ -709,13 +709,13 @@ def query_models():
         "question": question,
         "is_legal": is_legal,  # Add flag for legal status
         "model_a": {
-            "name": "eBrevia",
+            "name": "Tool A",
             "response": "",
             "metrics": {},
             "status": "pending"
         },
         "model_b": {
-            "name": "Equally.ai",
+            "name": "Tool B",
             "response": "",
             "metrics": {},
             "status": "pending"
@@ -1133,7 +1133,7 @@ def calculate_custom_rating(votes, current_rating=500, model_name=None):
     Parameters:
     - votes: List of all vote documents
     - current_rating: Current rating of the model
-    - model_name: Name of the model ("eBrevia" or "Equally.ai")
+    - model_name: Name of the model ("Tool A" or "Tool B")
    
     Returns:
     - New custom rating value
@@ -1162,12 +1162,12 @@ def calculate_custom_rating(votes, current_rating=500, model_name=None):
         vote_type = vote["vote_type"]
         
         # Model-specific scoring
-        if model_name == "eBrevia":  # Model A
+        if model_name == "Tool A":  # Model A
             if vote_type == "a":  # Win for model A
                 total_score += weight
             elif vote_type == "b":  # Loss for model A
                 total_score -= weight
-        elif model_name == "Equally.ai":  # Model B
+        elif model_name == "Tool B":  # Model B
             if vote_type == "b":  # Win for model B
                 total_score += weight
             elif vote_type == "a":  # Loss for model B
@@ -1187,7 +1187,7 @@ def calculate_custom_rating(votes, current_rating=500, model_name=None):
 # Update the MongoDB schema to include custom rating
 def initialize_ratings():
     """Initialize both ELO and custom ratings for models if they don't exist"""
-    models = ["eBrevia", "Equally.ai"]
+    models = ["Tool A", "Tool B"]
     default_elo = 1500  # Standard starting ELO
     default_custom = 500  # Starting custom rating
     
@@ -1215,7 +1215,7 @@ def initialize_ratings():
             logger.info(f"Added custom rating to existing model {model}")
 def initialize_elo_ratings():
     """Initialize ELO ratings for models if they don't exist"""
-    models = ["eBrevia", "Equally.ai"]
+    models = ["Tool A", "Tool B"]
     default_elo = 1500  # Standard starting ELO
     
     for model in models:
@@ -1315,13 +1315,13 @@ def cast_vote():
         }), 400
     
     # Get current ratings
-    model_a_data = elo_ratings_collection.find_one({"model_name": "eBrevia"})
-    model_b_data = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
+    model_a_data = elo_ratings_collection.find_one({"model_name": "Tool A"})
+    model_b_data = elo_ratings_collection.find_one({"model_name": "Tool B"})
     
     if not model_a_data or not model_b_data:
         initialize_ratings()
-        model_a_data = elo_ratings_collection.find_one({"model_name": "eBrevia"})
-        model_b_data = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
+        model_a_data = elo_ratings_collection.find_one({"model_name": "Tool A"})
+        model_b_data = elo_ratings_collection.find_one({"model_name": "Tool B"})
     
     rating_a_elo = model_a_data["elo_rating"]
     rating_b_elo = model_b_data["elo_rating"]
@@ -1410,12 +1410,12 @@ def cast_vote():
         all_votes = previous_votes + [vote_doc]
         # Calculate custom ratings
         # Don't flip votes; instead pass the model name to the calculation function
-        new_rating_a_custom = calculate_custom_rating(all_votes, rating_a_custom, "eBrevia")
-        new_rating_b_custom = calculate_custom_rating(all_votes, rating_b_custom, "Equally.ai")
+        new_rating_a_custom = calculate_custom_rating(all_votes, rating_a_custom, "Tool A")
+        new_rating_b_custom = calculate_custom_rating(all_votes, rating_b_custom, "Tool B")
         
         # Update ratings in database
         elo_ratings_collection.update_one(
-            {"model_name": "eBrevia"},
+            {"model_name": "Tool A"},
             {"$set": {
                 "elo_rating": new_rating_a_elo,
                 "custom_rating": new_rating_a_custom,
@@ -1428,7 +1428,7 @@ def cast_vote():
         )
         
         elo_ratings_collection.update_one(
-            {"model_name": "Equally.ai"},
+            {"model_name": "Tool B"},
             {"$set": {
                 "elo_rating": new_rating_b_elo,
                 "custom_rating": new_rating_b_custom,
@@ -1453,8 +1453,8 @@ def cast_vote():
     }
     
     # Get updated ratings
-    model_a_updated = elo_ratings_collection.find_one({"model_name": "eBrevia"})
-    model_b_updated = elo_ratings_collection.find_one({"model_name": "Equally.ai"})
+    model_a_updated = elo_ratings_collection.find_one({"model_name": "Tool A"})
+    model_b_updated = elo_ratings_collection.find_one({"model_name": "Tool B"})
     
     logger.info(f"Vote successful - returning vote counts: {vote_counts}")
     
@@ -1463,14 +1463,14 @@ def cast_vote():
         "vote_recorded": vote_type,
         "vote_counts": vote_counts,
         "model_ratings": {
-            "eBrevia": {
+            "Tool A": {
                 "elo_rating": model_a_updated["elo_rating"],
                 "custom_rating": model_a_updated.get("custom_rating", 500),
                 "wins": model_a_updated["wins"],
                 "losses": model_a_updated["losses"],
                 "ties": model_a_updated["ties"]
             },
-            "Equally.ai": {
+            "Tool B": {
                 "elo_rating": model_b_updated["elo_rating"],
                 "custom_rating": model_b_updated.get("custom_rating", 500),
                 "wins": model_b_updated["wins"],
